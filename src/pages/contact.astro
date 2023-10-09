@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title='Contact AOLar.no'>
+    <main class='grid min-h-[50vh] gap-4 place-content-center p-2 py-6 max-w-2xl mx-auto'>
+        <div class='flex flex-wrap flex-col md:flex-row content-center gap-4 p-4 md:p-0 md:py-2'>
+            <h2 class='self-baseline font-semibold md:text-left text-xl md:text-4xl'>
+                You found me!
+            </h2>
+            <p class='self-baseline font-semibold md:text-left md:text-2xl'>It's ok to say hi</p>
+        </div>
+        <p class='p-4'>
+            If you serch for my name, I'll probably show up in a few places on the internet. Though
+            the easies way to reach me is to just drop me a message here
+        </p>
+        <form
+            class='grid gap-2 px-3 py-4 md:px-4'
+            data-netlify='true'
+            netlify-honeypot='bot-field'
+            method='POST'
+            id='contact-form'
+        >
+            <p class='hidden'>
+                <label>
+                    Don't fill this out if you're human: <input name='bot-field' />
+                </label>
+            </p>
+            <formfield class='py-2 flex flex-wrap gap-2'>
+                <label class='flex flex-col w-full'>
+                    Name
+                    <input
+                        required
+                        name='name'
+                        type='text'
+                        placeholder='Name'
+                        class='p-2 rounded-sm text-primary border invalid:border-rose-500 valid:border-green-600'
+                    />
+                </label>
+                <label class='flex flex-col w-full'>
+                    E-mail
+                    <input
+                        name='email'
+                        required
+                        type='email'
+                        placeholder='something@other.com'
+                        class='p-2 rounded-sm text-primary border invalid:border-rose-500 valid:border-green-600'
+                    />
+                </label>
+            </formfield>
+            <label class='flex flex-col'>
+                Message
+                <textarea
+                    name='message'
+                    required
+                    class='p-2 rounded-sm text-primary border invalid:border-rose-500 valid:border-green-600'
+                    placeholder='Say hi and let me know what is on your mind'
+                    rows='10'></textarea>
+            </label>
+            <input
+                name='submit'
+                type='submit'
+                value='Send message'
+                class='py-2 rounded-sm bg-green-700 text-secondary cursor-pointer hover:bg-green-900 md:w-1/2 md:justify-self-end'
+            />
+        </form>
+    </main><a href='https://github.com/aoelarsen' class='cursor-pointer'> </a><a
+        href='https://github.com/aoelarsen'
+        class='cursor-pointer'
+    >
+        <script is:inline>
+            document
+                .getElementById('contact-form')
+                .addEventListener('submit', (e) => e.preventDefault);
+        </script>
+    </a>
+</Layout>
