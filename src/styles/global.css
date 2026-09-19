@@ -1,0 +1,113 @@
+:root {
+    --color-primary: #1d212e;
+    --color-secondary: #f9f7f5;
+    --color-link: #16a34a;
+    --color-link-hover: #166534;
+    --color-link-dark: #bbf7d0;
+    --color-link-dark-hover: #86efac;
+    --accent: 124, 58, 237;
+    --accent-gradient: linear-gradient(45deg, rgb(var(--accent)), #da62c4 30%, white 60%);
+    --font-sans:
+        Rubik,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        'Helvetica Neue',
+        Arial,
+        'Noto Sans',
+        sans-serif,
+        'Apple Color Emoji',
+        'Segoe UI Emoji',
+        'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-mono:
+        Menlo,
+        Monaco,
+        'Lucida Console',
+        'Liberation Mono',
+        'DejaVu Sans Mono',
+        'Bitstream Vera Sans Mono',
+        'Courier New',
+        monospace;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100vh;
+}
+
+html {
+    font-family: system-ui, sans-serif;
+    background-color: #f6f6f6;
+}
+
+body {
+    background-color: var(--color-secondary);
+    color: var(--color-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: var(--color-primary);
+        color: var(--color-secondary);
+    }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-sans);
+}
+
+code {
+    font-family: var(--font-mono);
+}
+
+.container {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+}
+
+.front-wrap {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+}
+
+.link {
+    color: var(--color-link);
+    transition:
+        color 0.3s ease-in-out,
+        text-decoration-color 0.3s ease-in-out;
+}
+
+.link:hover,
+.link:focus {
+    color: var(--color-link-hover);
+    text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+    .link {
+        color: var(--color-link-dark);
+    }
+
+    .link:hover,
+    .link:focus {
+        color: var(--color-link-dark-hover);
+    }
+}

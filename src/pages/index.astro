@@ -3,19 +3,96 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title='Welcome to AOLar.no'>
-    <main class='grid grid-cols-1 min-h-[50vh]'>
-        <section
-            class='mx-auto p-4 h-2/4 self-center grid content-center w-11/12 text-center md:text-right'
-        >
-            <h2 class='text-bold text-5xl md:text-7xl'>Frontend developer</h2>
-            <p class='text-1xl md:text-2xl'>&hellip; working as a bicycle&nbsp;mechanic</p>
+    <main class='home-main'>
+        <section class='home-intro'>
+            <h2>Frontend developer</h2>
+            <p>&hellip; working as a bicycle&nbsp;mechanic</p>
         </section>
-        <figure class='p-4 w-11/12 lg:w-full self-center mx-auto'>
-            <blockquote class='min-h-'>
-                <p class='text-center md:text-right lg:text-center text-2xl md:text-3xl p-4'>
-                    I consider myself a problem solver regardless of occupation.
-                </p>
+        <figure class='home-quote'>
+            <blockquote>
+                <p>I consider myself a problem solver regardless of occupation.</p>
             </blockquote>
         </figure>
     </main>
 </Layout>
+
+<style>
+    .home-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        min-height: 50vh;
+    }
+
+    .home-intro {
+        margin-inline: auto;
+        padding: 1rem;
+        align-self: center;
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        width: 91.6667%;
+        text-align: center;
+    }
+
+    @media (min-width: 768px) {
+        .home-intro {
+            text-align: right;
+        }
+    }
+
+    .home-intro h2 {
+        font-weight: 700;
+        font-size: 3rem;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .home-intro h2 {
+            font-size: 4.5rem;
+        }
+    }
+
+    .home-intro p {
+        font-size: 1.25rem;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .home-intro p {
+            font-size: 1.5rem;
+        }
+    }
+
+    .home-quote {
+        padding: 1rem;
+        width: 91.6667%;
+        align-self: center;
+        margin-inline: auto;
+    }
+
+    @media (min-width: 1024px) {
+        .home-quote {
+            width: 100%;
+        }
+    }
+
+    .home-quote p {
+        text-align: center;
+        font-size: 1.5rem;
+        padding: 1rem;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .home-quote p {
+            text-align: right;
+            font-size: 1.875rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .home-quote p {
+            text-align: center;
+        }
+    }
+</style>

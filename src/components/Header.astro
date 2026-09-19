@@ -2,14 +2,58 @@
 import MainNav from './MainNav.astro';
 ---
 
-<header class='p-5 md:p-7 lg:p-10 grid grid-cols-[1fr,auto]'>
+<header class='site-header'>
     <div>
-        <a href='/'>
-            <h1 class='font-bold text-2xl md:text-3xl'>
-                AOL<span class='font-thin pl-[0.15rem]'>ar.no</span>
-            </h1>
-            <p class='mt-1'>Anders Øksendal Larsen</p>
+        <a href='/' class='brand-link'>
+            <h1 class='brand-title'>AOL<span class='brand-title-thin'>ar.no</span></h1>
+            <p class='brand-subtitle'>Anders Øksendal Larsen</p>
         </a>
     </div>
     <MainNav />
 </header>
+
+<style>
+    .site-header {
+        padding: 1.25rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+    }
+
+    @media (min-width: 768px) {
+        .site-header {
+            padding: 1.75rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .site-header {
+            padding: 2.5rem;
+        }
+    }
+
+    .brand-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .brand-title {
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .brand-title {
+            font-size: 1.875rem;
+        }
+    }
+
+    .brand-title-thin {
+        font-weight: 300;
+        padding-left: 0.15rem;
+    }
+
+    .brand-subtitle {
+        margin: 0.25rem 0 0;
+    }
+</style>

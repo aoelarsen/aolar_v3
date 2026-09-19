@@ -2,6 +2,29 @@
 const thisYear = new Date().getFullYear();
 ---
 
-<footer class='font-sans p-4 h-min flex justify-center items-center text-center gap-6'>
-    <p class='self-end'>&copy; {thisYear}<span class='font-bold px-[0.15rem]'> AOL</span>ar.no</p>
+<footer class='site-footer'>
+    <p class='footer-text'>&copy; {thisYear}<span class='footer-brand'> AOL</span>ar.no</p>
 </footer>
+
+<style>
+    .site-footer {
+        font-family: var(--font-sans);
+        padding: 1rem;
+        height: min-content;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .footer-text {
+        align-self: flex-end;
+        margin: 0;
+    }
+
+    .footer-brand {
+        font-weight: 700;
+        padding-inline: 0.15rem;
+    }
+</style>

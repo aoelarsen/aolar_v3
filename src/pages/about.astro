@@ -3,51 +3,44 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title='About AOLar.no'>
-    <main class='grid min-h-[50vh] gap-4 place-content-center p-2 max-w-2xl mx-auto'>
-        <h2 class='font-semibold text-center md:text-left py-4 md:text-4xl'>About AOLar.no</h2>
-        <p class='text-xl p-4'>
-            Aolar.no is a webspace for exploration, tinkering and testing new stuff.
-        </p>
-        <p class='text-md p-4'>
+    <main class='page about-page'>
+        <h2 class='page-title'>About AOLar.no</h2>
+        <p class='lead'>Aolar.no is a webspace for exploration, tinkering and testing new stuff.</p>
+        <p class='body-text'>
             Anders Øksendal Larsen is me... a dude interested in bicycles, frontend-develpment, Lego
             among other things. Current occupation; bicycle mechanic, ski-technician and "him with
-            the beard" for <a
-                class='text-green-600 hover:text-green-800 focus:text-green-800 hover:underline dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300 transition-all duration-300 ease-in-out'
-                href='https://sport1.no/butikker/sport1royken/'>Sport1 Røyken</a
+            the beard" for <a class='link' href='https://sport1.no/butikker/sport1royken/'
+                >Sport1 Røyken</a
             >
         </p>
-        <section class='px-3 py-4 md:px-4'>
-            <h3 class='font-semibold md:text-lg'>This site is:</h3>
+        <section class='info-block'>
+            <h3>This site is:</h3>
             <p>
-                - created with <a
-                    class='text-green-600 hover:text-green-800 focus:text-green-800 hover:underline dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300 transition-all duration-300 ease-in-out'
-                    href='https://astro.build'>Astro</a
-                > &amp; <a
-                    class='text-green-600 hover:text-green-800 focus:text-green-800 hover:underline dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300 transition-all duration-300 ease-in-out'
-                    href='https://tailwindcss.com/'>Tailwindcss</a
-                >
+                - created with <a class='link' href='https://astro.build'>Astro</a>
             </p>
-            <div class='flex flex-wrap gap-2 align-middle'>
+            <div class='deploy-status'>
                 <p>
-                    - hosted with <a
-                        href='https://netlify.com'
-                        class='text-green-600 hover:text-green-800 focus:text-green-800 hover:underline dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300 transition-all duration-300 ease-in-out'
-                        >Netlify</a
-                    >
-                </p><a href='https://app.netlify.com/sites/aolar/deploys' class='flex'></a>
+                    - hosted with <a href='https://netlify.com' class='link'>Netlify</a>
+                </p><a href='https://app.netlify.com/sites/aolar/deploys' class='deploy-status-link'
+                ></a>
                 &rarr; <img
-                    class='self-center'
+                    class='deploy-badge'
                     alt='netlify status badge'
                     src='https://api.netlify.com/api/v1/badges/4ce45616-d7c6-4d16-bd5c-2eb5c9a5f300/deploy-status'
                 />
             </div>
+            <p>
+                - now also with help from <a class='link' href='https://claude.com/claude-code'
+                    >Claude Code</a
+                >
+            </p>
         </section>
-        <section class='px-3 py-4 md:px-4'>
-            <h3 class='font-semibold md:text-lg'>Things I work on:</h3>
+        <section class='info-block'>
+            <h3>Things I work on:</h3>
             <p>Can be found in the workshop at Sport1 Røyken</p>
             <p>&hellip; or on github:</p>
 
-            <a href='https://github.com/aoelarsen' class='py-6 flex gap-4 justify-center'>
+            <a href='https://github.com/aoelarsen' class='github-link'>
                 <svg
                     height='32'
                     aria-hidden='true'
@@ -55,7 +48,7 @@ import Layout from '../layouts/Layout.astro';
                     version='1.1'
                     width='32'
                     data-view-component='true'
-                    class='dark:fill-secondary'
+                    class='github-icon'
                 >
                     <path
                         fill-rule='evenodd'
@@ -65,9 +58,113 @@ import Layout from '../layouts/Layout.astro';
                 aoelarsen
             </a>
 
-            <p class='mt-4 text-xs md:text-sm'>
+            <p class='fine-print'>
                 [&hellip; more will be inserted here as soon as I have the time to update]
             </p>
         </section>
     </main>
 </Layout>
+
+<style>
+    .page {
+        display: grid;
+        min-height: 50vh;
+        gap: 1rem;
+        place-content: center;
+        padding: 0.5rem;
+        max-width: 42rem;
+        margin-inline: auto;
+    }
+
+    .page-title {
+        font-weight: 600;
+        text-align: center;
+        padding: 1rem 0;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .page-title {
+            text-align: left;
+            font-size: 2.25rem;
+        }
+    }
+
+    .lead {
+        font-size: 1.25rem;
+        padding: 1rem;
+        margin: 0;
+    }
+
+    .body-text {
+        font-size: 1rem;
+        padding: 1rem;
+        margin: 0;
+    }
+
+    .info-block {
+        padding: 1rem 0.75rem;
+    }
+
+    @media (min-width: 768px) {
+        .info-block {
+            padding: 1rem;
+        }
+    }
+
+    .info-block h3 {
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .info-block h3 {
+            font-size: 1.125rem;
+        }
+    }
+
+    .deploy-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .deploy-status p {
+        margin: 0;
+    }
+
+    .deploy-status-link {
+        display: flex;
+    }
+
+    .deploy-badge {
+        align-self: center;
+    }
+
+    .github-link {
+        padding: 1.5rem 0;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .github-icon {
+            fill: var(--color-secondary);
+        }
+    }
+
+    .fine-print {
+        margin-top: 1rem;
+        font-size: 0.75rem;
+    }
+
+    @media (min-width: 768px) {
+        .fine-print {
+            font-size: 0.875rem;
+        }
+    }
+</style>

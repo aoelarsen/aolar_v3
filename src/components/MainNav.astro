@@ -1,213 +1,264 @@
 ---
 const pathname = new URL(Astro.request.url).pathname;
 const currentPath = pathname.slice(1);
+
+const links = [
+    { href: '/', label: 'Home', path: '' },
+    { href: '/about', label: 'About', path: 'about' },
+    { href: '/contact', label: 'Contact', path: 'contact' },
+];
 ---
 
-<nav class='bg-secondary text-primary dark:bg-primary dark:text-secondary justify-self-end'>
-    <div class='mx-auto max-w-7xl px-2 sm:px-6 lg:px-8'>
-        <div class='flex h-16 items-center justify-between'>
-            <div class='inset-y-0 left-0 flex items-center sm:hidden'>
-                <!-- Mobile menu button-->
+<nav class='site-nav'>
+    <div class='nav-inner'>
+        <div class='nav-bar'>
+            <div class='menu-button-wrap'>
                 <button
                     type='button'
-                    class='inline-flex items-center justify-center rounded-sm p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white'
-                    aria-controls='mobile-menu'
+                    class='menu-button'
+                    aria-controls='mobileMenu'
                     aria-expanded='false'
                     id='navButton'
                 >
                     <span class='sr-only'>Open main menu</span>
-                    <!--
-            Icon when menu is closed.
-
-            Heroicon name: outline/bars-3
-
-            Menu open: "hidden", Menu closed: "block"
-          -->
                     <svg
-                        class='block h-6 w-6'
+                        class='icon icon-open'
                         xmlns='http://www.w3.org/2000/svg'
                         fill='none'
                         viewBox='0 0 24 24'
                         stroke-width='1.5'
                         stroke='currentColor'
                         aria-hidden='true'
-                        id='openMenuIcon'
                     >
                         <path
                             stroke-linecap='round'
                             stroke-linejoin='round'
                             d='M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'></path>
                     </svg>
-                    <!--
-            Icon when menu is open.
-
-            Heroicon name: outline/x-mark
-
-            Menu open: "block", Menu closed: "hidden"
-          -->
                     <svg
-                        class='hidden h-6 w-6'
+                        class='icon icon-closed'
                         xmlns='http://www.w3.org/2000/svg'
                         fill='none'
                         viewBox='0 0 24 24'
                         stroke-width='1.5'
                         stroke='currentColor'
                         aria-hidden='true'
-                        id='closedMenuIcon'
                     >
-                        <path
-                            stroke-linecap='round'
-                            stroke-linejoin='round'
-                            d='M6 18L18 6M6 6l12 12'></path>
+                        <path stroke-linecap='round' stroke-linejoin='round' d='M6 18L18 6M6 6l12 12'
+                        ></path>
                     </svg>
                 </button>
             </div>
-            <div class='flex flex-1 items-center justify-center sm:items-stretch sm:justify-start'>
-                <div class='hidden sm:ml-6 sm:block'>
-                    <div class='flex space-x-4'>
-                        {
-                            currentPath === '' ? (
-                                <a
-                                    href='/'
-                                    class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                    aria-current='page'
-                                >
-                                    Home
-                                </a>
-                            ) : (
-                                <a
-                                    href='/'
-                                    class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                >
-                                    Home
-                                </a>
-                            )
-                        }
-
-                        {
-                            currentPath === 'about' ? (
-                                <a
-                                    href='/about'
-                                    class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                    aria-current='page'
-                                >
-                                    About
-                                </a>
-                            ) : (
-                                <a
-                                    href='/about'
-                                    class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                >
-                                    About
-                                </a>
-                            )
-                        }
-
-                        {
-                            currentPath === 'contact' ? (
-                                <a
-                                    href='/contact'
-                                    class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                    aria-current='page'
-                                >
-                                    Contact
-                                </a>
-                            ) : (
-                                <a
-                                    href='/contact'
-                                    class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                                >
-                                    Contact
-                                </a>
-                            )
-                        }
-                    </div>
-                </div>
+            <div class='nav-links'>
+                {
+                    links.map((link) => (
+                        <a
+                            href={link.href}
+                            class:list={['nav-link', { 'is-active': currentPath === link.path }]}
+                            aria-current={currentPath === link.path ? 'page' : undefined}
+                        >
+                            {link.label}
+                        </a>
+                    ))
+                }
             </div>
         </div>
     </div>
 
-    <!-- Mobile menu, show/hide based on menu state. -->
-    <div class='hidden relative h-min md:hidden' id='mobileMenu'>
-        <div
-            class='absolute right-[5vw] w-[80vw] h-min flex flex-col gap-2 bg-secondary dark:bg-primary space-y-1 px-2 pt-2 pb-3 border-green-800 rounded-sm'
-        >
+    <div class='mobile-menu' id='mobileMenu'>
+        <div class='mobile-menu-inner'>
             {
-                currentPath === '' ? (
+                links.map((link) => (
                     <a
-                        href='/'
-                        class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                        aria-current='page'
+                        href={link.href}
+                        class:list={['nav-link', { 'is-active': currentPath === link.path }]}
+                        aria-current={currentPath === link.path ? 'page' : undefined}
                     >
-                        Home
+                        {link.label}
                     </a>
-                ) : (
-                    <a
-                        href='/'
-                        class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                    >
-                        Home
-                    </a>
-                )
-            }
-
-            {
-                currentPath === 'about' ? (
-                    <a
-                        href='/about'
-                        class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                        aria-current='page'
-                    >
-                        About
-                    </a>
-                ) : (
-                    <a
-                        href='/about'
-                        class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                    >
-                        About
-                    </a>
-                )
-            }
-
-            {
-                currentPath === 'contact' ? (
-                    <a
-                        href='/contact'
-                        class='bg-gray-900 text-white px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                        aria-current='page'
-                    >
-                        Contact
-                    </a>
-                ) : (
-                    <a
-                        href='/contact'
-                        class='text-green-600 hover:text-green-200 focus:text-green-800 hover:bg-gray-700  px-3 py-2 rounded-sm text-sm font-medium dark:text-green-200 dark:hover:text-green-300 dark:focus:text-green-300'
-                    >
-                        Contact
-                    </a>
-                )
+                ))
             }
         </div>
     </div>
 </nav>
 
-<script is:inline>
-    const openMenuIcon = document.getElementById('openMenuIcon');
-    const closedMenuIcon = document.getElementById('closedMenuIcon');
-    const menuItems = document.getElementById('mobileMenu');
-    const handleNav = () => {
-        openMenuIcon.classList.contains('block')
-            ? openMenuIcon.classList.replace('block', 'hidden')
-            : openMenuIcon.classList.replace('hidden', 'block');
-        closedMenuIcon.classList.contains('block')
-            ? closedMenuIcon.classList.replace('block', 'hidden')
-            : closedMenuIcon.classList.replace('hidden', 'block');
-        menuItems.classList.contains('hidden')
-            ? menuItems.classList.replace('hidden', 'block')
-            : menuItems.classList.replace('block', 'hidden');
-        console.log('a button was clicked');
-    };
+<style>
+    .site-nav {
+        justify-self: end;
+        width: 100%;
+    }
 
-    document.getElementById('navButton').addEventListener('click', handleNav);
+    .nav-inner {
+        max-width: 80rem;
+        margin-inline: auto;
+        padding-inline: 0.5rem;
+    }
+
+    @media (min-width: 640px) {
+        .nav-inner {
+            padding-inline: 1.5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .nav-inner {
+            padding-inline: 2rem;
+        }
+    }
+
+    .nav-bar {
+        display: flex;
+        height: 4rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .menu-button-wrap {
+        display: flex;
+        align-items: center;
+    }
+
+    @media (min-width: 640px) {
+        .menu-button-wrap {
+            display: none;
+        }
+    }
+
+    .menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.125rem;
+        padding: 0.5rem;
+        color: #9ca3af;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+    }
+
+    .menu-button:hover {
+        background-color: #374151;
+        color: #fff;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .icon {
+        height: 1.5rem;
+        width: 1.5rem;
+    }
+
+    .icon-closed {
+        display: none;
+    }
+
+    .site-nav.menu-open .icon-open {
+        display: none;
+    }
+
+    .site-nav.menu-open .icon-closed {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    @media (min-width: 640px) {
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            margin-left: 1.5rem;
+        }
+    }
+
+    .mobile-menu {
+        position: relative;
+        height: min-content;
+        display: none;
+    }
+
+    .site-nav.menu-open .mobile-menu {
+        display: block;
+    }
+
+    @media (min-width: 768px) {
+        .mobile-menu {
+            display: none !important;
+        }
+    }
+
+    .mobile-menu-inner {
+        position: absolute;
+        right: 5vw;
+        width: 80vw;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        background-color: var(--color-secondary);
+        padding: 0.5rem 0.5rem 0.75rem;
+        border-radius: 0.125rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .mobile-menu-inner {
+            background-color: var(--color-primary);
+        }
+    }
+
+    .nav-link {
+        color: var(--color-link);
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.125rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .nav-link:hover,
+    .nav-link:focus {
+        color: var(--color-link-hover);
+        background-color: #374151;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .nav-link {
+            color: var(--color-link-dark);
+        }
+
+        .nav-link:hover,
+        .nav-link:focus {
+            color: var(--color-link-dark-hover);
+        }
+    }
+
+    .nav-link.is-active {
+        background-color: #111827;
+        color: #fff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .nav-link.is-active {
+            color: var(--color-link-dark);
+        }
+    }
+</style>
+
+<script is:inline>
+    const navButton = document.getElementById('navButton');
+    const nav = navButton.closest('.site-nav');
+    navButton.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('menu-open');
+        navButton.setAttribute('aria-expanded', String(isOpen));
+    });
 </script>
