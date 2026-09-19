@@ -1,18 +1,26 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { getUi } from '../i18n/ui';
+import ThemeToggle from './ThemeToggle.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
 
+export interface Props {
+    path?: string;
+}
+
+const { path = '' } = Astro.props;
 const locale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
 const t = getUi(locale);
-
-const pathname = new URL(Astro.request.url).pathname;
-const currentPath = pathname.replace(/^\/nb\/?/, '').replace(/^\//, '');
 
 const links = [
     { path: '', label: t.nav.home },
     { path: 'about', label: t.nav.about },
     { path: 'contact', label: t.nav.contact },
-].map((link) => ({ ...link, href: getRelativeLocaleUrl(locale, link.path) }));
+].map((link) => ({
+    ...link,
+    href: getRelativeLocaleUrl(locale, link.path),
+    isActive: link.path === path,
+}));
 ---
 
 <nav class='site-nav'>
@@ -60,8 +68,8 @@ const links = [
                     links.map((link) => (
                         <a
                             href={link.href}
-                            class:list={['nav-link', { 'is-active': currentPath === link.path }]}
-                            aria-current={currentPath === link.path ? 'page' : undefined}
+                            class:list={['nav-link', { 'is-active': link.isActive }]}
+                            aria-current={link.isActive ? 'page' : undefined}
                         >
                             {link.label}
                         </a>
@@ -77,13 +85,17 @@ const links = [
                 links.map((link) => (
                     <a
                         href={link.href}
-                        class:list={['nav-link', { 'is-active': currentPath === link.path }]}
-                        aria-current={currentPath === link.path ? 'page' : undefined}
+                        class:list={['nav-link', { 'is-active': link.isActive }]}
+                        aria-current={link.isActive ? 'page' : undefined}
                     >
                         {link.label}
                     </a>
                 ))
             }
+            <div class='mobile-utility-bar'>
+                <ThemeToggle />
+                <LanguageSwitcher path={path} />
+            </div>
         </div>
     </div>
 </nav>
@@ -205,12 +217,23 @@ const links = [
         border: 1px solid var(--ink);
     }
 
+    /* Theme/language controls live here on small screens; Header.astro hides
+       its own copy below 640px, where this menu is the only way to reach it. */
+    .mobile-utility-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--ink);
+    }
+
     .nav-link {
-        color: var(--link);
+        color: var(--ink);
         padding: 0.5rem 0.75rem;
         border-radius: 0.125rem;
-        font-size: 0.875rem;
-        font-weight: 500;
+        font-size: 0.9375rem;
+        font-weight: 700;
         text-decoration: none;
     }
 

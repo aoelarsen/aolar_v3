@@ -15,6 +15,25 @@ const otherHref = getRelativeLocaleUrl(otherLocale, path);
 ---
 
 <a href={otherHref} class='language-switch' hreflang={otherLocale} title={t.switchLanguageHint}>
+    {
+        otherLocale === 'nb' ? (
+            <svg class='flag-icon' width='22' height='16' viewBox='0 0 22 16' aria-hidden='true'>
+                <rect width='22' height='16' fill='#ef2b2d' />
+                <rect x='6' width='4' height='16' fill='#fff' />
+                <rect y='6' width='22' height='4' fill='#fff' />
+                <rect x='7' width='2' height='16' fill='#002868' />
+                <rect y='7' width='22' height='2' fill='#002868' />
+            </svg>
+        ) : (
+            <svg class='flag-icon' width='20' height='14' viewBox='0 0 20 14' aria-hidden='true'>
+                <rect width='20' height='14' fill='#00247d' />
+                <path d='M0 0L20 14M20 0L0 14' stroke='#fff' stroke-width='3' />
+                <path d='M0 0L20 14M20 0L0 14' stroke='#cf142b' stroke-width='1.2' />
+                <path d='M10 0V14M0 7H20' stroke='#fff' stroke-width='4.5' />
+                <path d='M10 0V14M0 7H20' stroke='#cf142b' stroke-width='2.4' />
+            </svg>
+        )
+    }
     {t.switchLanguageLabel}
 </a>
 
@@ -22,11 +41,11 @@ const otherHref = getRelativeLocaleUrl(otherLocale, path);
     .language-switch {
         display: inline-flex;
         align-items: center;
-        padding: 0.4rem 0.6rem;
+        gap: 0.35rem;
+        padding: 0.3rem 0.4rem;
         border-radius: 0.25rem;
-        border: 1px solid var(--ink);
         color: var(--ink);
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         text-decoration: none;
     }
 
@@ -34,5 +53,12 @@ const otherHref = getRelativeLocaleUrl(otherLocale, path);
     .language-switch:focus-visible {
         background-color: var(--ink);
         color: var(--surface);
+    }
+
+    .flag-icon {
+        width: 1.1rem;
+        height: auto;
+        flex-shrink: 0;
+        border-radius: 0.125rem;
     }
 </style>

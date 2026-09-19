@@ -1,6 +1,6 @@
 :root {
     --color-primary: #1d212e;
-    --color-secondary: #f9f7f5;
+    --color-secondary: #eae8e7;
     --color-link: #16a34a;
     --color-link-hover: #166534;
     --color-link-dark: #bbf7d0;
@@ -78,7 +78,7 @@ body {
 
 html {
     font-family: system-ui, sans-serif;
-    background-color: #f6f6f6;
+    background-color: var(--color-secondary);
 }
 
 body {
