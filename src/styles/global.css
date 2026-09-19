@@ -32,6 +32,36 @@
         'Bitstream Vera Sans Mono',
         'Courier New',
         monospace;
+
+    /*
+     * Theme-semantic tokens: everything else in the site should reference
+     * these, not --color-primary/--color-secondary/--color-link* directly,
+     * so a single place decides what "light" and "dark" mean. Default here
+     * is light; the media query and the manual override below are the only
+     * two places that ever redefine them.
+     */
+    --ink: var(--color-primary);
+    --surface: var(--color-secondary);
+    --link: var(--color-link);
+    --link-hover: var(--color-link-hover);
+}
+
+/* System preference applies whenever the visitor hasn't manually chosen a theme. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --ink: var(--color-secondary);
+        --surface: var(--color-primary);
+        --link: var(--color-link-dark);
+        --link-hover: var(--color-link-dark-hover);
+    }
+}
+
+/* Manual override, set by ThemeToggle.astro, wins regardless of system preference. */
+:root[data-theme='dark'] {
+    --ink: var(--color-secondary);
+    --surface: var(--color-primary);
+    --link: var(--color-link-dark);
+    --link-hover: var(--color-link-dark-hover);
 }
 
 *,
@@ -52,15 +82,8 @@ html {
 }
 
 body {
-    background-color: var(--color-secondary);
-    color: var(--color-primary);
-}
-
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: var(--color-primary);
-        color: var(--color-secondary);
-    }
+    background-color: var(--surface);
+    color: var(--ink);
 }
 
 h1,
@@ -89,25 +112,138 @@ code {
 }
 
 .link {
-    color: var(--color-link);
+    color: var(--link);
     transition:
         color 0.3s ease-in-out,
         text-decoration-color 0.3s ease-in-out;
 }
 
 .link:hover,
-.link:focus {
-    color: var(--color-link-hover);
+.link:focus-visible {
+    color: var(--link-hover);
     text-decoration: underline;
 }
 
-@media (prefers-color-scheme: dark) {
-    .link {
-        color: var(--color-link-dark);
-    }
+/*
+ * A consistent, high-contrast focus ring for every interactive element,
+ * so focus is always visible (WCAG 2.4.7) regardless of each browser's own
+ * default outline style.
+ */
+:focus-visible {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
 
-    .link:hover,
-    .link:focus {
-        color: var(--color-link-dark-hover);
+/*
+ * Visually hidden until focused - lets keyboard users jump straight past
+ * the header/nav to the page's main content (WCAG 2.4.1 Bypass Blocks).
+ */
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 0.75rem 1.25rem;
+    background-color: var(--surface);
+    color: var(--ink);
+    transform: translateY(-100%);
+    transition: transform 0.2s ease-in-out;
+}
+
+.skip-link:focus-visible {
+    transform: translateY(0);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.holding-logo {
+    width: min(68.75vw, 300px);
+    height: auto;
+    display: block;
+    margin-inline: auto;
+}
+
+.holding-logo .logo-brace,
+.holding-logo .logo-chain,
+.holding-logo .logo-foot-bar-left,
+.holding-logo .logo-foot-bar-right {
+    fill: none;
+    stroke: var(--ink);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.holding-logo .logo-brace,
+.holding-logo .logo-foot-bar-left,
+.holding-logo .logo-foot-bar-right {
+    stroke-width: 7;
+}
+
+.holding-logo .logo-chain {
+    stroke-width: 3;
+}
+
+/*
+ * The cog and hub deliberately always use the light-mode green
+ * (--color-link), not the theme-aware --link: in dark mode --link resolves
+ * to a pale mint that reads almost as bright as the white "A" outline next
+ * to it, so the two competed. This medium green clears 3:1 against the dark
+ * background but reads clearly darker than the brace in either theme.
+ */
+.holding-logo .logo-cog,
+.holding-logo .logo-hub {
+    fill: none;
+    stroke: var(--color-link);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/*
+ * Hidden-until-drawn state, expressed with each stroke's own pathLength=100
+ * so it's a static CSS default present from first paint - no waiting on JS
+ * to measure and hide it after the fact. JS only ever adds `is-drawn` to
+ * reveal it; a <noscript> rule and prefers-reduced-motion below restore
+ * full visibility without needing JS at all.
+ */
+.holding-logo .draw {
+    stroke-dasharray: 100%;
+    stroke-dashoffset: 100%;
+}
+
+/* The A, cog, hub and chain all draw together - same start, same finish. */
+.holding-logo.is-drawn .logo-brace,
+.holding-logo.is-drawn .logo-cog,
+.holding-logo.is-drawn .logo-hub,
+.holding-logo.is-drawn .logo-chain {
+    stroke-dashoffset: 0%;
+    transition: stroke-dashoffset 900ms ease-in-out 0ms;
+}
+
+/* Each foot bar appears just as the "A" stroke reaches that foot. */
+.holding-logo.is-drawn .logo-foot-bar-left {
+    stroke-dashoffset: 0%;
+    transition: stroke-dashoffset 250ms ease-in-out 0ms;
+}
+
+.holding-logo.is-drawn .logo-foot-bar-right {
+    /* Same duration as the left bar, timed to finish exactly when the A/cog/hub/chain group does. */
+    stroke-dashoffset: 0%;
+    transition: stroke-dashoffset 250ms ease-in-out 650ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .holding-logo .draw {
+        stroke-dashoffset: 0%;
     }
 }

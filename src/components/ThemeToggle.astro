@@ -1,0 +1,78 @@
+---
+import { getUi } from '../i18n/ui';
+
+const t = getUi(Astro.currentLocale);
+---
+
+<button
+    type='button'
+    class='theme-toggle'
+    id='themeToggle'
+    aria-label={t.themeLabel}
+>
+    <span class='theme-toggle-icon' aria-hidden='true'></span>
+    <span class='theme-toggle-state' id='themeToggleState'>{t.themeSystem}</span>
+</button>
+
+<script is:inline define:vars={{ system: getUi(Astro.currentLocale).themeSystem, light: getUi(Astro.currentLocale).themeLight, dark: getUi(Astro.currentLocale).themeDark }}>
+    (function () {
+        const STORAGE_KEY = 'aolar-theme';
+        const order = ['system', 'light', 'dark'];
+        const labels = { system, light, dark };
+        const button = document.getElementById('themeToggle');
+        const stateLabel = document.getElementById('themeToggleState');
+        if (!button || !stateLabel) return;
+
+        function current() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return order.includes(stored) ? stored : 'system';
+        }
+
+        function apply(theme) {
+            if (theme === 'system') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            stateLabel.textContent = labels[theme];
+            button.setAttribute('aria-pressed', String(theme !== 'system'));
+        }
+
+        apply(current());
+
+        button.addEventListener('click', () => {
+            const next = order[(order.indexOf(current()) + 1) % order.length];
+            if (next === 'system') {
+                localStorage.removeItem(STORAGE_KEY);
+            } else {
+                localStorage.setItem(STORAGE_KEY, next);
+            }
+            apply(next);
+        });
+    })();
+</script>
+
+<style>
+    .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--ink);
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .theme-toggle-icon {
+        display: inline-block;
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-secondary) 50%, var(--color-primary) 50%);
+        border: 1px solid currentColor;
+    }
+</style>

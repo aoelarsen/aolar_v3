@@ -1,0 +1,124 @@
+.page {
+    display: grid;
+    min-height: 50vh;
+    gap: 1rem;
+    place-content: center;
+    padding: 0.5rem 0.5rem 1.5rem;
+    max-width: 42rem;
+    margin-inline: auto;
+}
+
+.contact-heading {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .contact-heading {
+        flex-direction: row;
+        padding: 0.5rem 0;
+    }
+}
+
+.contact-heading h2 {
+    align-self: baseline;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+@media (min-width: 768px) {
+    .contact-heading h2 {
+        font-size: 2.25rem;
+    }
+}
+
+.tagline {
+    align-self: baseline;
+    font-weight: 600;
+    margin: 0;
+}
+
+@media (min-width: 768px) {
+    .tagline {
+        font-size: 1.5rem;
+    }
+}
+
+.body-text {
+    padding: 1rem;
+    margin: 0;
+}
+
+.contact-form {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .contact-form {
+        padding: 1rem;
+    }
+}
+
+.honeypot {
+    display: none;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-block: 0.5rem;
+}
+
+input,
+textarea {
+    padding: 0.5rem;
+    border-radius: 0.125rem;
+    color: var(--ink);
+    background-color: var(--surface);
+    border: 1px solid #6b7280;
+    font: inherit;
+}
+
+input:invalid,
+textarea:invalid {
+    border-color: #f43f5e;
+}
+
+input:valid,
+textarea:valid {
+    border-color: #16a34a;
+}
+
+.submit-button {
+    padding-block: 0.5rem;
+    border-radius: 0.125rem;
+    background-color: #15803d;
+    color: #f9f7f5;
+    cursor: pointer;
+    border: none;
+}
+
+.submit-button:hover {
+    background-color: #14532d;
+}
+
+@media (min-width: 768px) {
+    .submit-button {
+        width: 50%;
+        justify-self: end;
+    }
+}

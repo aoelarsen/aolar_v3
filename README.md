@@ -14,5 +14,5 @@ Feel free to contact me if you have any questions on my work, or just want to ta
 
 The website will gradually fill up with new stuff... or be totally redone... or just be the same for a long time...
 
-## Update as of 09.10.23
-Now this site is updated to Astro v3. And some other stuff, hopefully... probably.
+## Update as of september 2026
+Now this site is updated to Astro v7 - getting help from Claude Code and other AI tools. Rewiting the site to represent AOLar Holding AS.

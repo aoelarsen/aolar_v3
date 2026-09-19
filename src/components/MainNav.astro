@@ -1,12 +1,18 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getUi } from '../i18n/ui';
+
+const locale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
+const t = getUi(locale);
+
 const pathname = new URL(Astro.request.url).pathname;
-const currentPath = pathname.slice(1);
+const currentPath = pathname.replace(/^\/nb\/?/, '').replace(/^\//, '');
 
 const links = [
-    { href: '/', label: 'Home', path: '' },
-    { href: '/about', label: 'About', path: 'about' },
-    { href: '/contact', label: 'Contact', path: 'contact' },
-];
+    { path: '', label: t.nav.home },
+    { path: 'about', label: t.nav.about },
+    { path: 'contact', label: t.nav.contact },
+].map((link) => ({ ...link, href: getRelativeLocaleUrl(locale, link.path) }));
 ---
 
 <nav class='site-nav'>
@@ -20,7 +26,7 @@ const links = [
                     aria-expanded='false'
                     id='navButton'
                 >
-                    <span class='sr-only'>Open main menu</span>
+                    <span class='sr-only'>{t.openMenu}</span>
                     <svg
                         class='icon icon-open'
                         xmlns='http://www.w3.org/2000/svg'
@@ -130,27 +136,15 @@ const links = [
         justify-content: center;
         border-radius: 0.125rem;
         padding: 0.5rem;
-        color: #9ca3af;
+        color: var(--ink);
         background: transparent;
         border: none;
         cursor: pointer;
     }
 
     .menu-button:hover {
-        background-color: #374151;
-        color: #fff;
-    }
-
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
+        background-color: var(--ink);
+        color: var(--surface);
     }
 
     .icon {
@@ -205,19 +199,14 @@ const links = [
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        background-color: var(--color-secondary);
+        background-color: var(--surface);
         padding: 0.5rem 0.5rem 0.75rem;
         border-radius: 0.125rem;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .mobile-menu-inner {
-            background-color: var(--color-primary);
-        }
+        border: 1px solid var(--ink);
     }
 
     .nav-link {
-        color: var(--color-link);
+        color: var(--link);
         padding: 0.5rem 0.75rem;
         border-radius: 0.125rem;
         font-size: 0.875rem;
@@ -226,31 +215,14 @@ const links = [
     }
 
     .nav-link:hover,
-    .nav-link:focus {
-        color: var(--color-link-hover);
-        background-color: #374151;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .nav-link {
-            color: var(--color-link-dark);
-        }
-
-        .nav-link:hover,
-        .nav-link:focus {
-            color: var(--color-link-dark-hover);
-        }
+    .nav-link:focus-visible {
+        color: var(--surface);
+        background-color: var(--ink);
     }
 
     .nav-link.is-active {
-        background-color: #111827;
-        color: #fff;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .nav-link.is-active {
-            color: var(--color-link-dark);
-        }
+        background-color: var(--ink);
+        color: var(--surface);
     }
 </style>
 

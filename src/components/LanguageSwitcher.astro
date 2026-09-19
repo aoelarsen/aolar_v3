@@ -1,0 +1,38 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getUi } from '../i18n/ui';
+
+export interface Props {
+    /** Locale-agnostic page path, e.g. '' for the home page or 'about'. */
+    path?: string;
+}
+
+const { path = '' } = Astro.props;
+const currentLocale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
+const otherLocale = currentLocale === 'en' ? 'nb' : 'en';
+const t = getUi(currentLocale);
+const otherHref = getRelativeLocaleUrl(otherLocale, path);
+---
+
+<a href={otherHref} class='language-switch' hreflang={otherLocale} title={t.switchLanguageHint}>
+    {t.switchLanguageLabel}
+</a>
+
+<style>
+    .language-switch {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--ink);
+        color: var(--ink);
+        font-size: 0.8rem;
+        text-decoration: none;
+    }
+
+    .language-switch:hover,
+    .language-switch:focus-visible {
+        background-color: var(--ink);
+        color: var(--surface);
+    }
+</style>

@@ -1,0 +1,71 @@
+.home-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 50vh;
+}
+
+.home-intro {
+    margin-inline: auto;
+    padding: 1rem;
+    align-self: center;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    width: 91.6667%;
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    .home-intro {
+        text-align: right;
+    }
+}
+
+.home-intro h2 {
+    margin: 0;
+    width: 100%;
+}
+
+.home-intro h3 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+@media (min-width: 768px) {
+    .home-intro h3 {
+        font-size: 2.1rem;
+    }
+}
+
+.home-quote {
+    padding: 1rem;
+    width: 91.6667%;
+    align-self: center;
+    margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+    .home-quote {
+        width: 100%;
+    }
+}
+
+.home-quote p {
+    text-align: center;
+    font-size: 1.5rem;
+    padding: 1rem;
+    margin: 0;
+}
+
+@media (min-width: 768px) {
+    .home-quote p {
+        text-align: right;
+        font-size: 1.875rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .home-quote p {
+        text-align: center;
+    }
+}
