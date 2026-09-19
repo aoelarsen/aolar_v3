@@ -1,47 +1,33 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { getUi, links } from '../../i18n/ui';
 import '../../styles/pages/about.css';
+
+const t = getUi(Astro.currentLocale);
+const about = t.pages.about;
 ---
 
-<Layout title='Om AOLar.no' path='about'>
+<Layout title={about.title} path='about'>
     <main class='page about-page' id='main-content'>
-        <h2 class='page-title'>Om AOLar.no og AOLar Holding AS</h2>
-        <p class='lead'>Aolar.no er et nettsted for utforsking, tukling og testing av nye ting.</p>
-        <p class='body-text'>
-            AOLar Holding AS er et selskap eid av Anders Øksendal Larsen; en kar som er interessert i
-            sykler, frontend-utvikling og AI, blant annet. Nåværende yrke: sykkelmekaniker,
-            skitekniker og "han med skjegget" hos <a class='link' href='https://roykensykkelservice.no/'
-                >Røyken Sykkelservice AS</a
-            >
-        </p>
+        <h2 class='page-title'>{about.title}</h2>
+        <p class='lead'>{about.lead}</p>
+        <p class='body-text' set:html={about.bodyHtml} />
         <section class='info-block'>
-            <h3>Denne siden er:</h3>
-            <p>
-                - laget med <a class='link' href='https://astro.build'>Astro</a>
-            </p>
+            <h3>{about.siteIsHeading}</h3>
+            <p set:html={about.createdWithHtml} />
             <div class='deploy-status'>
-                <p>
-                    - hostet med <a href='https://netlify.com' class='link'>Netlify</a>
-                </p><a href='https://app.netlify.com/sites/aolar/deploys' class='deploy-status-link'
-                ></a>
-                &rarr; <img
-                    class='deploy-badge'
-                    alt='Netlify-statusmerke'
-                    src='https://api.netlify.com/api/v1/badges/4ce45616-d7c6-4d16-bd5c-2eb5c9a5f300/deploy-status'
-                />
+                <p set:html={about.hostedWithHtml} />
+                <a href={links.netlifyDeploys} class='deploy-status-link'></a>
+                &rarr; <img class='deploy-badge' alt={about.netlifyBadgeAlt} src={links.netlifyBadge} />
             </div>
-            <p>
-                - nå også med hjelp fra <a class='link' href='https://claude.com/claude-code'
-                    >Claude Code</a
-                >
-            </p>
+            <p set:html={about.helpFromHtml} />
         </section>
         <section class='info-block'>
-            <h3>Ting jeg jobber med:</h3>
-            <p>Du finner meg på verkstedet hos Sport1 Røyken</p>
-            <p>&hellip; eller på GitHub:</p>
+            <h3>{about.workHeading}</h3>
+            <p>{about.workshopText}</p>
+            <p>{about.githubIntro}</p>
 
-            <a href='https://github.com/aoelarsen' class='github-link'>
+            <a href={links.github} class='github-link'>
                 <svg
                     height='32'
                     aria-hidden='true'
@@ -56,12 +42,10 @@ import '../../styles/pages/about.css';
                         d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z'
                     ></path>
                 </svg>
-                aoelarsen
+                {about.githubHandle}
             </a>
 
-            <p class='fine-print'>
-                [&hellip; mer kommer her så snart jeg får tid til å oppdatere]
-            </p>
+            <p class='fine-print'>{about.finePrint}</p>
         </section>
     </main>
 </Layout>

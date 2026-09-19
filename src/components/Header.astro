@@ -3,6 +3,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import MainNav from './MainNav.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import { companyName } from '../i18n/ui';
 
 export interface Props {
     path?: string;
@@ -17,7 +18,7 @@ const homeHref = getRelativeLocaleUrl(locale, '');
     <div>
         <a href={homeHref} class='brand-link'>
             <h1 class='brand-title'>AOL<span class='brand-title-thin'>ar.no</span></h1>
-            <p class='brand-subtitle'>AOLar Holding AS</p>
+            <p class='brand-subtitle'>{companyName}</p>
         </a>
     </div>
     <div class='header-actions'>

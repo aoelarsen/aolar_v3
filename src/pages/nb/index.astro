@@ -1,10 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import HoldingLogo from '../../components/HoldingLogo';
+import { getUi, companyName } from '../../i18n/ui';
 import '../../styles/pages/index.css';
+
+const t = getUi(Astro.currentLocale);
 ---
 
-<Layout title='Velkommen til AOLar.no' path=''>
+<Layout title={t.pages.home.title} path=''>
     <main class='home-main' id='main-content'>
         <section class='home-intro'>
             <h2><HoldingLogo client:visible /></h2>
@@ -15,11 +18,11 @@ import '../../styles/pages/index.css';
                     }
                 </style>
             </noscript>
-            <h3>AOLar Holding AS</h3>
+            <h3>{companyName}</h3>
         </section>
         <figure class='home-quote'>
             <blockquote>
-                <p>Jeg anser meg selv som en problemløser, uansett yrke.</p>
+                <p>{t.pages.home.quote}</p>
             </blockquote>
         </figure>
     </main>

@@ -1,18 +1,19 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { getUi } from '../../i18n/ui';
 import '../../styles/pages/contact.css';
+
+const t = getUi(Astro.currentLocale);
+const contact = t.pages.contact;
 ---
 
-<Layout title='Kontakt AOLar.no' path='contact'>
+<Layout title={contact.title} path='contact'>
     <main class='page contact-page' id='main-content'>
         <div class='contact-heading'>
-            <h2>Du fant meg!</h2>
-            <p class='tagline'>Det er lov å si hei</p>
+            <h2>{contact.heading}</h2>
+            <p class='tagline'>{contact.tagline}</p>
         </div>
-        <p class='body-text'>
-            Hvis du søker etter navnet mitt, dukker jeg nok opp noen steder på internett. Men den
-            enkleste måten å nå meg på er å bare legge igjen en melding her
-        </p>
+        <p class='body-text'>{contact.bodyText}</p>
         <form
             class='contact-form'
             name='contact'
@@ -24,34 +25,31 @@ import '../../styles/pages/contact.css';
             <input type='hidden' name='form-name' value='contact' />
             <p class='honeypot'>
                 <label>
-                    Ikke fyll ut dette feltet hvis du er et menneske: <input name='bot-field' />
+                    {contact.honeypotLabel}<input name='bot-field' />
                 </label>
             </p>
             <div class='field-row'>
                 <label class='field'>
-                    Navn
-                    <input required name='name' type='text' autocomplete='name' placeholder='Navn' />
+                    {contact.nameLabel}
+                    <input required name='name' type='text' autocomplete='name' placeholder={contact.namePlaceholder} />
                 </label>
                 <label class='field'>
-                    E-post
+                    {contact.emailLabel}
                     <input
                         name='email'
                         required
                         type='email'
                         autocomplete='email'
-                        placeholder='noe@annet.com'
+                        placeholder={contact.emailPlaceholder}
                     />
                 </label>
             </div>
             <label class='field'>
-                Melding
-                <textarea
-                    name='message'
-                    required
-                    placeholder='Si hei og fortell meg hva du tenker på'
-                    rows='10'></textarea>
+                {contact.messageLabel}
+                <textarea name='message' required placeholder={contact.messagePlaceholder} rows='10'
+                ></textarea>
             </label>
-            <input name='submit' type='submit' value='Send melding' class='submit-button' />
+            <input name='submit' type='submit' value={contact.submitLabel} class='submit-button' />
         </form>
         <script is:inline>
             document.getElementById('contact-form').addEventListener('submit', (e) => e.preventDefault);
