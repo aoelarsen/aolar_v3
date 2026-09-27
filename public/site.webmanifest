@@ -1,0 +1,11 @@
+{
+    "name": "AOLar Holding AS",
+    "short_name": "AOLar",
+    "icons": [
+        { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ],
+    "theme_color": "#1d3b30",
+    "background_color": "#f1ede3",
+    "display": "browser"
+}

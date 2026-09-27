@@ -1,7 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import HoldingLogo from '../components/HoldingLogo';
-import { getUi, companyName } from '../i18n/ui';
+import BrandEmblem from '../components/BrandEmblem.astro';
+import Wordmark from '../components/Wordmark.astro';
+import { getUi } from '../i18n/ui';
 import '../styles/pages/index.css';
 
 const t = getUi(Astro.currentLocale);
@@ -10,15 +11,10 @@ const t = getUi(Astro.currentLocale);
 <Layout title={t.pages.home.title} path=''>
     <main class='home-main' id='main-content'>
         <section class='home-intro'>
-            <h2><HoldingLogo client:visible /></h2>
-            <noscript>
-                <style>
-                    .holding-logo .draw {
-                        stroke-dashoffset: 0%;
-                    }
-                </style>
-            </noscript>
-            <h3>{companyName}</h3>
+            <h2 class='home-logo'>
+                <BrandEmblem class='home-emblem' />
+                <Wordmark class='home-wordmark' />
+            </h2>
         </section>
         <figure class='home-quote'>
             <blockquote>

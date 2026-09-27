@@ -89,31 +89,34 @@ textarea {
     border-radius: 0.125rem;
     color: var(--ink);
     background-color: var(--surface);
-    border: 1px solid #6b7280;
+    border: 1px solid var(--field-border);
     font: inherit;
 }
 
 input:invalid,
 textarea:invalid {
-    border-color: #f43f5e;
+    border-color: var(--danger);
 }
 
 input:valid,
 textarea:valid {
-    border-color: #16a34a;
+    border-color: var(--success);
 }
 
 .submit-button {
     padding-block: 0.5rem;
     border-radius: 0.125rem;
-    background-color: #15803d;
-    color: #f9f7f5;
+    background-color: var(--ink);
+    color: var(--surface);
+    font: inherit;
+    font-weight: 600;
     cursor: pointer;
     border: none;
 }
 
-.submit-button:hover {
-    background-color: #14532d;
+.submit-button:hover,
+.submit-button:focus-visible {
+    background-color: var(--link);
 }
 
 @media (min-width: 768px) {

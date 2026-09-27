@@ -1,0 +1,64 @@
+---
+/**
+ * The AOLar emblem, inlined so its colours follow the site's own theme
+ * toggle (--aolar-ink / --aolar-accent in global.css) rather than only the
+ * OS preference an <img> could react to. Paths are copied from
+ * public/brand/aolar-emblem-themeable.svg and aolar-emblem-small.svg;
+ * per the brand README, use `small` below 96px.
+ *
+ * Decorative by default, since it always sits next to the company name in
+ * text; pass `label` when it stands alone.
+ */
+export interface Props {
+    variant?: 'full' | 'small';
+    label?: string;
+    class?: string;
+}
+
+const { variant = 'full', label, class: className } = Astro.props;
+
+// The full emblem's brass ticks, shortest to longest (clockwise from the
+// top), each drawn from its inner end outward. Kept as separate paths so
+// they can be animated one at a time; `--i` is each tick's position.
+const fullTicks = 'M122.25 31.52L123.49 27.72M131.91 35.46L133.86 31.50M140.90 40.75L143.64 36.78M149.03 47.28L152.60 43.45M156.14 54.91L160.53 51.38M162.06 63.50L167.28 60.43M166.68 72.85L172.67 70.41M169.91 82.77L176.58 81.12M171.66 93.05L178.91 92.35M171.92 103.48L179.60 103.85M170.66 113.83L178.61 115.39M167.92 123.90L175.95 126.72M163.75 133.46L171.65 137.61M158.25 142.32L165.80 147.81M151.52 150.29L158.50 157.10M143.72 157.21L149.88 165.28M134.99 162.93L140.12 172.16M125.53 167.32L129.42 177.58M115.54 170.30L117.99 181.42M105.22 171.81L106.07 183.57M94.78 171.81L93.90 183.98M84.46 170.30L81.74 182.62M74.47 167.32L69.85 179.50M65.01 162.93L58.48 174.67M56.28 157.21L47.88 168.21M48.48 150.29L38.28 160.25M41.75 142.32L29.89 150.94M36.25 133.46L22.90 140.47M32.08 123.90L17.47 129.04M29.34 113.83L13.74 116.89M28.08 103.48L11.80 104.27M28.34 93.05L11.70 91.44M30.09 82.77L13.46 78.67M33.32 72.85L17.07 66.24M37.94 63.50L22.47 54.40M43.86 54.91L29.55 43.42M50.97 47.28L38.18 33.53M59.10 40.75L48.20 24.96M68.09 35.46L59.41 17.90M77.75 31.52L71.57 12.50'
+    .split('M')
+    .filter(Boolean)
+    .map((tick) => `M${tick}`);
+---
+
+{
+    variant === 'full' ? (
+        <svg class:list={['aolar-emblem', className]} viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg' role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
+            <g
+                class='aolar-emblem-ticks'
+                fill='none'
+                stroke='#A77B27'
+                stroke-width='3.4'
+                stroke-linecap='round'
+                style='stroke:var(--aolar-accent,#A77B27)'
+            >
+                {fullTicks.map((tick, i) => <path d={tick} pathLength='1' style={`--i:${i}`} />)}
+            </g>
+            <path
+                d='M40 117L56.5 83H63.5L80 117H72L60 92.27L48 117ZM50.8 110L53.7 104H66.3L69.2 110ZM132 83H139.5V110H160V117H132Z'
+                fill='#1D3B30'
+                style='fill:var(--aolar-ink,#1D3B30)'
+            />
+            <circle cx='106' cy='100' r='14.5' fill='none' stroke='#1D3B30' stroke-width='7' style='stroke:var(--aolar-ink,#1D3B30)' />
+            <path d='M94.5 119.92L117.5 80.08' fill='none' stroke='#1D3B30' stroke-width='6' style='stroke:var(--aolar-ink,#1D3B30)' />
+        </svg>
+    ) : (
+        <svg class:list={['aolar-emblem', className]} viewBox='5 5 54 54' xmlns='http://www.w3.org/2000/svg' role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}>
+            <path
+                d='M40.00 18.14L41.25 15.98M45.46 23.35L47.95 21.75M47.93 30.48L51.32 30.16M46.85 37.95L50.44 39.38M42.48 44.09L45.31 47.36M35.77 47.55L36.90 52.19M28.23 47.55L27.00 52.63M21.52 44.09L17.80 48.39M17.15 37.95L11.45 40.23M16.07 30.48L9.51 29.85M18.54 23.35L12.61 19.54M24.00 18.14L20.25 11.65'
+                fill='none'
+                stroke='#A77B27'
+                stroke-width='3'
+                stroke-linecap='round'
+                style='stroke:var(--aolar-accent,#A77B27)'
+            />
+            <circle cx='32' cy='32' r='8.5' fill='none' stroke='#1D3B30' stroke-width='4.5' style='stroke:var(--aolar-ink,#1D3B30)' />
+            <path d='M25.5 43.26L38.5 20.74' fill='none' stroke='#1D3B30' stroke-width='4' style='stroke:var(--aolar-ink,#1D3B30)' />
+        </svg>
+    )
+}

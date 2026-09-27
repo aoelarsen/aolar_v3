@@ -1,28 +1,28 @@
+@import '@fontsource-variable/schibsted-grotesk/wght.css';
+
 :root {
-    --color-primary: #1d212e;
-    --color-secondary: #eae8e7;
-    --color-link: #16a34a;
-    --color-link-hover: #166534;
-    --color-link-dark: #bbf7d0;
-    --color-link-dark-hover: #86efac;
-    --accent: 124, 58, 237;
-    --accent-gradient: linear-gradient(45deg, rgb(var(--accent)), #da62c4 30%, white 60%);
+    /*
+     * Brand palette, from public/brand/README.md. The "night" surface isn't
+     * in the brand sheet - it's a deep tone of the brand green, picked so the
+     * brand's own dark-mode ink (#ECE8DD) and brass (#D6AA52) sit on it at
+     * 13.7:1 and 7.8:1.
+     */
+    --brand-green: #1d3b30;
+    --brand-cream: #f1ede3;
+    --brand-paper: #ece8dd;
+    --brand-night: #12201a;
+    --brand-brass: #a77b27;
+    --brand-brass-light: #d6aa52;
+    /* Brass darkened for text: the logo brass is only 3.3:1 on cream, this is 5.2:1. */
+    --brand-brass-deep: #7f5c1c;
+
     --font-sans:
-        Rubik,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        Roboto,
+        'Schibsted Grotesk Variable',
+        'Schibsted Grotesk',
         'Helvetica Neue',
+        Helvetica,
         Arial,
-        'Noto Sans',
-        sans-serif,
-        'Apple Color Emoji',
-        'Segoe UI Emoji',
-        'Segoe UI Symbol',
-        'Noto Color Emoji';
+        sans-serif;
     --font-mono:
         Menlo,
         Monaco,
@@ -35,33 +35,47 @@
 
     /*
      * Theme-semantic tokens: everything else in the site should reference
-     * these, not --color-primary/--color-secondary/--color-link* directly,
-     * so a single place decides what "light" and "dark" mean. Default here
-     * is light; the media query and the manual override below are the only
-     * two places that ever redefine them.
+     * these, not the --brand-* values directly, so a single place decides
+     * what "light" and "dark" mean. Default here is light; the media query
+     * and the manual override below are the only two places that ever
+     * redefine them.
      */
-    --ink: var(--color-primary);
-    --surface: var(--color-secondary);
-    --link: var(--color-link);
-    --link-hover: var(--color-link-hover);
+    --ink: var(--brand-green);
+    --surface: var(--brand-cream);
+    --accent: var(--brand-brass);
+    --link: var(--brand-brass-deep);
+    --link-hover: var(--brand-green);
+    --field-border: color-mix(in srgb, var(--ink) 45%, transparent);
+    --success: #2e6b4f;
+    --danger: #b3261e;
+
+    /* Read by the inline brand emblem (BrandEmblem.astro). */
+    --aolar-ink: var(--ink);
+    --aolar-accent: var(--accent);
 }
 
 /* System preference applies whenever the visitor hasn't manually chosen a theme. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-        --ink: var(--color-secondary);
-        --surface: var(--color-primary);
-        --link: var(--color-link-dark);
-        --link-hover: var(--color-link-dark-hover);
+        --ink: var(--brand-paper);
+        --surface: var(--brand-night);
+        --accent: var(--brand-brass-light);
+        --link: var(--brand-brass-light);
+        --link-hover: var(--brand-paper);
+        --success: #7fb89a;
+        --danger: #f2a69c;
     }
 }
 
 /* Manual override, set by ThemeToggle.astro, wins regardless of system preference. */
 :root[data-theme='dark'] {
-    --ink: var(--color-secondary);
-    --surface: var(--color-primary);
-    --link: var(--color-link-dark);
-    --link-hover: var(--color-link-dark-hover);
+    --ink: var(--brand-paper);
+    --surface: var(--brand-night);
+    --accent: var(--brand-brass-light);
+    --link: var(--brand-brass-light);
+    --link-hover: var(--brand-paper);
+    --success: #7fb89a;
+    --danger: #f2a69c;
 }
 
 *,
@@ -78,7 +92,7 @@ body {
 
 html {
     font-family: system-ui, sans-serif;
-    background-color: var(--color-secondary);
+    background-color: var(--surface);
 }
 
 body {
@@ -166,84 +180,14 @@ code {
     border: 0;
 }
 
-.holding-logo {
-    width: min(68.75vw, 300px);
-    height: auto;
-    display: block;
-    margin-inline: auto;
+/* The company name as set next to the emblem - "AOL" a little heavier than the rest. */
+.aolar-wordmark {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink);
 }
 
-.holding-logo .logo-brace,
-.holding-logo .logo-chain,
-.holding-logo .logo-foot-bar-left,
-.holding-logo .logo-foot-bar-right {
-    fill: none;
-    stroke: var(--ink);
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.holding-logo .logo-brace,
-.holding-logo .logo-foot-bar-left,
-.holding-logo .logo-foot-bar-right {
-    stroke-width: 7;
-}
-
-.holding-logo .logo-chain {
-    stroke-width: 3;
-}
-
-/*
- * The cog and hub deliberately always use the light-mode green
- * (--color-link), not the theme-aware --link: in dark mode --link resolves
- * to a pale mint that reads almost as bright as the white "A" outline next
- * to it, so the two competed. This medium green clears 3:1 against the dark
- * background but reads clearly darker than the brace in either theme.
- */
-.holding-logo .logo-cog,
-.holding-logo .logo-hub {
-    fill: none;
-    stroke: var(--color-link);
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/*
- * Hidden-until-drawn state, expressed with each stroke's own pathLength=100
- * so it's a static CSS default present from first paint - no waiting on JS
- * to measure and hide it after the fact. JS only ever adds `is-drawn` to
- * reveal it; a <noscript> rule and prefers-reduced-motion below restore
- * full visibility without needing JS at all.
- */
-.holding-logo .draw {
-    stroke-dasharray: 100%;
-    stroke-dashoffset: 100%;
-}
-
-/* The A, cog, hub and chain all draw together - same start, same finish. */
-.holding-logo.is-drawn .logo-brace,
-.holding-logo.is-drawn .logo-cog,
-.holding-logo.is-drawn .logo-hub,
-.holding-logo.is-drawn .logo-chain {
-    stroke-dashoffset: 0%;
-    transition: stroke-dashoffset 900ms ease-in-out 0ms;
-}
-
-/* Each foot bar appears just as the "A" stroke reaches that foot. */
-.holding-logo.is-drawn .logo-foot-bar-left {
-    stroke-dashoffset: 0%;
-    transition: stroke-dashoffset 250ms ease-in-out 0ms;
-}
-
-.holding-logo.is-drawn .logo-foot-bar-right {
-    /* Same duration as the left bar, timed to finish exactly when the A/cog/hub/chain group does. */
-    stroke-dashoffset: 0%;
-    transition: stroke-dashoffset 250ms ease-in-out 650ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .holding-logo .draw {
-        stroke-dashoffset: 0%;
-    }
+.aolar-initials {
+    font-weight: 760;
 }

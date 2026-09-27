@@ -3,7 +3,8 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import MainNav from './MainNav.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import LanguageSwitcher from './LanguageSwitcher.astro';
-import { companyName } from '../i18n/ui';
+import BrandEmblem from './BrandEmblem.astro';
+import Wordmark from './Wordmark.astro';
 
 export interface Props {
     path?: string;
@@ -17,8 +18,8 @@ const homeHref = getRelativeLocaleUrl(locale, '');
 <header class='site-header'>
     <div>
         <a href={homeHref} class='brand-link'>
-            <h1 class='brand-title'>AOL<span class='brand-title-thin'>ar.no</span></h1>
-            <p class='brand-subtitle'>{companyName}</p>
+            <BrandEmblem variant='small' class='brand-emblem' />
+            <h1 class='brand-title'><Wordmark /></h1>
         </a>
     </div>
     <div class='header-actions'>
@@ -51,29 +52,22 @@ const homeHref = getRelativeLocaleUrl(locale, '');
     }
 
     .brand-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
         text-decoration: none;
         color: inherit;
     }
 
+    .brand-emblem {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
     .brand-title {
-        font-weight: 700;
-        font-size: 1.5rem;
+        font-size: 1rem;
         margin: 0;
-    }
-
-    @media (min-width: 768px) {
-        .brand-title {
-            font-size: 1.875rem;
-        }
-    }
-
-    .brand-title-thin {
-        font-weight: 300;
-        padding-left: 0.15rem;
-    }
-
-    .brand-subtitle {
-        margin: 0.25rem 0 0;
     }
 
     .header-actions {

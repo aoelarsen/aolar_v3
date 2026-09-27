@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<style>
+.tile{fill:#1D3B30} .ticks{stroke:#D6AA52} .o{stroke:#F1EDE3}
+@media (prefers-color-scheme: dark){ .tile{fill:#D6AA52} .ticks,.o{stroke:#1D3B30} }
+</style>
+<rect class="tile" width="64" height="64" rx="14"/>
+<path class="ticks" d="M43.89 17.83L45.50 15.91M50.22 28.79L53.24 28.25M48.02 41.25L51.18 43.07M38.33 49.38L39.77 53.34M25.67 49.38L24.04 53.88M15.98 41.25L11.34 43.93M13.78 28.79L7.94 27.76M20.11 17.83L15.93 12.85" fill="none" stroke-width="4.5" stroke-linecap="round"/>
+<circle class="o" cx="32" cy="32" r="9.5" fill="none" stroke-width="5.5"/>
+<path class="o" d="M24.5 44.99L39.5 19.01" fill="none" stroke-width="5"/>
+</svg>

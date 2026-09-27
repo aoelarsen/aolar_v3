@@ -1,0 +1,10 @@
+---
+/** The company name set as text, per the brand README: "AOL" a little heavier than the rest. */
+export interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<span class:list={['aolar-wordmark', className]}><span class='aolar-initials'>AOL</span>ar Holding AS</span>
