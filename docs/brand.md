@@ -1,6 +1,6 @@
 # AOLar Holding AS: logo files
 
-Put this `brand/` folder where your site serves static files from (for example `public/` in Vite, Astro or Next.js, or the site root for plain HTML). The snippets below assume the files are reachable at `/brand/`.
+In this repo the logo files live in `public/brand/`, so the site serves them at `/brand/`, which is what the snippets below assume. This guide is kept in `docs/` so it isn't published with them.
 
 ## Files
 
