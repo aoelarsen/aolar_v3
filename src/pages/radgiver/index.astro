@@ -1,0 +1,127 @@
+---
+import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../components/radgiver/Datafeil.astro';
+import Endring from '../../components/radgiver/Endring.astro';
+import Minigraf from '../../components/radgiver/Minigraf.astro';
+import RadMerke from '../../components/radgiver/RadMerke.astro';
+import Sikkerhet from '../../components/radgiver/Sikkerhet.astro';
+import {
+    RAD_TEKST,
+    delRisiko,
+    hentKurshistorikk,
+    hentSisteUke,
+    sorterAnbefalinger,
+    type Rad,
+} from '../../lib/radgiver/data';
+import { dato, kurs, ukenummer } from '../../lib/radgiver/format';
+
+export const prerender = false;
+
+let innhold;
+try {
+    const [uke, historikk] = await Promise.all([hentSisteUke(), hentKurshistorikk()]);
+    innhold = { uke, historikk };
+} catch (feil) {
+    innhold = { feil };
+}
+
+const uke = 'uke' in innhold ? innhold.uke : null;
+const historikk = 'historikk' in innhold ? innhold.historikk : {};
+const aksjer = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a]));
+const anbefalinger = uke ? sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger) : [];
+const antall = anbefalinger.reduce<Partial<Record<Rad, number>>>((sum, a) => ({ ...sum, [a.rad]: (sum[a.rad] ?? 0) + 1 }), {});
+const kursdato = uke ? Object.values(uke.ukedata.kurser)[0]?.siste_dato : undefined;
+---
+
+<RadgiverLayout title='Ukens råd' aktiv='rad'>
+    {
+        'feil' in innhold ? (
+            <Datafeil feil={innhold.feil} />
+        ) : !uke ? (
+            <div class='rg-kort rg-tom'>
+                <h1>Ingen rapporter ennå</h1>
+                <p>Den første ukesrapporten dukker opp her når den er lagt i rapporter/ i aksjeverktøyet.</p>
+            </div>
+        ) : (
+            <>
+                <section class='rg-ingress'>
+                    <p class='rg-overtittel'>
+                        Uke {ukenummer(uke.dato)} · {dato(uke.dato)}
+                    </p>
+                    <h1>Ukens råd</h1>
+                    <p class='rg-kommentar'>{uke.vurdering.portefolje.markedskommentar}</p>
+                    <ul class='rg-telling'>
+                        {(Object.keys(RAD_TEKST) as Rad[])
+                            .filter((r) => antall[r])
+                            .map((r) => (
+                                <li>
+                                    <RadMerke rad={r} /> <span>{antall[r]}</span>
+                                </li>
+                            ))}
+                    </ul>
+                    {uke.ukedata.feil.length > 0 && (
+                        <p class='rg-melding rg-melding-advarsel'>
+                            {uke.ukedata.feil.length} datakilder manglet denne uken.{' '}
+                            <a class='link' href={`/radgiver/rapport/${uke.dato}#datafeil`}>
+                                Se hvilke
+                            </a>
+                        </p>
+                    )}
+                </section>
+
+                <ul class='rg-kortgrid'>
+                    {anbefalinger.map((a) => {
+                        const aksje = aksjer.get(a.ticker);
+                        const k = uke.ukedata.kurser[a.ticker];
+                        const { risiko } = delRisiko(a.begrunnelse);
+                        return (
+                            <li class:list={['rg-kort', 'aksjekort', `aksjekort-${a.rad}`]}>
+                                <div class='aksjekort-topp'>
+                                    <h2>
+                                        <a class='aksjekort-lenke' href={`/radgiver/aksje/${a.ticker}`}>
+                                            {aksje?.navn ?? a.ticker}
+                                        </a>
+                                    </h2>
+                                    <span class='ticker'>{a.ticker}</span>
+                                </div>
+                                <p class='aksjekort-meta'>
+                                    {aksje?.sektor}
+                                    {aksje && aksje.antall > 0 && <span class='eies'>Eies · {aksje.antall} stk</span>}
+                                </p>
+                                <div class='aksjekort-rad'>
+                                    <RadMerke rad={a.rad} stor />
+                                    <Sikkerhet verdi={a.sikkerhet} />
+                                </div>
+                                <div class='aksjekort-kurs'>
+                                    <span class='kurs'>{kurs(k?.siste_kurs)}</span>
+                                    <Endring verdi={k?.endring_1_uke_pst} periode='1 uke' />
+                                </div>
+                                <div class='aksjekort-graf'>
+                                    <Minigraf serie={historikk[a.ticker]} />
+                                    <Endring verdi={k?.endring_3_mnd_pst} periode='3 mnd' />
+                                </div>
+                                <div class='aksjekort-bunn'>
+                                    {risiko ? (
+                                        <span class:list={['risiko', `risiko-${risiko}`]}>Risiko: {risiko}</span>
+                                    ) : (
+                                        <span />
+                                    )}
+                                    <span class='les-mer' aria-hidden='true'>
+                                        Les begrunnelse →
+                                    </span>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+
+                <p class='rg-fotnote'>
+                    {kursdato && <>Sluttkurser fra {dato(kursdato)}. </>}
+                    <a class='link' href={`/radgiver/rapport/${uke.dato}`}>
+                        Les hele ukesrapporten →
+                    </a>
+                </p>
+            </>
+        )
+    }
+</RadgiverLayout>

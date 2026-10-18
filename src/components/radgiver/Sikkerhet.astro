@@ -1,0 +1,11 @@
+---
+export interface Props {
+    verdi: number;
+}
+
+const { verdi } = Astro.props;
+---
+
+<span class='sikkerhet' role='img' aria-label={`Sikkerhet ${verdi} av 5`} title={`Sikkerhet ${verdi} av 5`}>
+    {[1, 2, 3, 4, 5].map((n) => <span class:list={['sikkerhet-prikk', { 'er-fylt': n <= verdi }]} />)}
+</span>

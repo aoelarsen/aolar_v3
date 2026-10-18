@@ -1,7 +1,12 @@
 ---
 import { getUi } from '../i18n/ui';
 
-const t = getUi(Astro.currentLocale);
+export interface Props {
+    /** Overrides the route's locale, for pages outside the i18n routing such as /radgiver. */
+    locale?: string;
+}
+
+const t = getUi(Astro.props.locale ?? Astro.currentLocale);
 ---
 
 <button type='button' class='theme-toggle' data-theme-state='light' aria-label={t.themeLabel}>

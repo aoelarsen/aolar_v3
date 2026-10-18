@@ -1,0 +1,76 @@
+---
+import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import { lagSupabase } from '../../lib/radgiver/supabase';
+
+export const prerender = false;
+
+const supabase = lagSupabase(Astro.request, Astro.cookies);
+const { data: innlogget } = await supabase.auth.getClaims();
+if (innlogget?.claims) return Astro.redirect('/radgiver', 303);
+
+type Status = 'skjema' | 'sendt' | 'for-mange' | 'utlopt';
+let status: Status = Astro.url.searchParams.get('feil') === 'lenke' ? 'utlopt' : 'skjema';
+let epost = '';
+
+if (Astro.request.method === 'POST') {
+    const skjema = await Astro.request.formData();
+    epost = String(skjema.get('epost') ?? '').trim();
+    if (epost) {
+        const { error } = await supabase.auth.signInWithOtp({
+            email: epost,
+            options: {
+                // Only the existing account gets a link; nobody can sign up from here.
+                shouldCreateUser: false,
+                emailRedirectTo: new URL('/radgiver/auth/bekreft', Astro.url).toString(),
+            },
+        });
+        // Same answer whether or not the address has access, so the form can't be used to probe for it.
+        // The real reason goes to the function log, where a misconfiguration would show up.
+        if (error) console.error('Innloggingslenke ikke sendt:', error.status, error.message);
+        status = error?.status === 429 ? 'for-mange' : 'sendt';
+    }
+}
+---
+
+<RadgiverLayout title='Logg inn'>
+    <section class='rg-innlogging'>
+        {
+            status === 'sendt' ? (
+                <div class='rg-kort rg-innlogging-kort' role='status'>
+                    <p class='rg-overtittel'>Sjekk e-posten din</p>
+                    <h1>Lenken er på vei</h1>
+                    <p>
+                        Har <strong>{epost}</strong> tilgang, får du en e-post med en innloggingslenke om litt. Lenken
+                        virker én gang og går ut etter en time.
+                    </p>
+                    <p class='rg-dempet'>
+                        Ingen e-post? Se i søppelposten, eller <a class='link' href='/radgiver/logg-inn'>prøv igjen</a>.
+                    </p>
+                </div>
+            ) : (
+                <form class='rg-kort rg-innlogging-kort' method='post'>
+                    <p class='rg-overtittel'>AOLar Rådgiver</p>
+                    <h1>Logg inn</h1>
+                    <p>Skriv inn e-postadressen din, så sender vi deg en innloggingslenke. Du trenger ikke passord.</p>
+                    {status === 'for-mange' && (
+                        <p class='rg-melding rg-melding-feil' role='alert'>
+                            For mange forsøk på kort tid. Vent litt og prøv igjen.
+                        </p>
+                    )}
+                    {status === 'utlopt' && (
+                        <p class='rg-melding rg-melding-feil' role='alert'>
+                            Lenken er brukt eller utløpt. Be om en ny under.
+                        </p>
+                    )}
+                    <label class='rg-felt'>
+                        E-post
+                        <input type='email' name='epost' required autocomplete='email' value={epost} autofocus />
+                    </label>
+                    <button type='submit' class='rg-knapp'>
+                        Send innloggingslenke
+                    </button>
+                </form>
+            )
+        }
+    </section>
+</RadgiverLayout>

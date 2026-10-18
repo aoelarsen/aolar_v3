@@ -1,0 +1,264 @@
+---
+/**
+ * Price chart for one stock: closing price, 50- and 200-day moving averages and
+ * a marker wherever advice was given. The lines are drawn client-side into a
+ * stretched SVG (non-scaling strokes), while labels, markers and the tooltip
+ * are HTML positioned in percent, so text never scales with the chart.
+ */
+import type { Kursserie, Rad } from '../../lib/radgiver/data';
+
+export interface Props {
+    serie: Kursserie;
+    rad: { dato: string; kurs: number; rad: Rad }[];
+    navn: string;
+}
+
+const { serie, rad, navn } = Astro.props;
+const data = JSON.stringify({ serie, rad }).replace(/</g, '\\u003c');
+---
+
+<figure class='kursgraf' data-kursgraf>
+    <figcaption class='sr-only'>Kursutvikling for {navn} med glidende snitt og tidligere råd</figcaption>
+    <div class='kg-topp'>
+        <ul class='kg-forklaring'>
+            <li><span class='kg-strek kg-kurs'></span>Sluttkurs</li>
+            <li><span class='kg-strek kg-s50'></span>50 dagers snitt</li>
+            <li><span class='kg-strek kg-s200'></span>200 dagers snitt</li>
+            <li><span class='kg-symbol kg-symbol-opp' aria-hidden='true'>▲</span>Kjøp/hold</li>
+            <li><span class='kg-symbol kg-symbol-ned' aria-hidden='true'>▼</span>Selg/ikke kjøp</li>
+        </ul>
+        <div class='kg-perioder' role='group' aria-label='Periode'>
+            <button type='button' data-maaneder='3' aria-pressed='false'>3 mnd</button>
+            <button type='button' data-maaneder='6' aria-pressed='true'>6 mnd</button>
+            <button type='button' data-maaneder='12' aria-pressed='false'>1 år</button>
+        </div>
+    </div>
+    <div class='kg-ramme'>
+        <div class='kg-y' aria-hidden='true'></div>
+        <div
+            class='kg-flate'
+            tabindex='0'
+            role='img'
+            aria-label={`Kursgraf for ${navn}. Bruk piltastene for å lese av verdier.`}
+        >
+            <svg viewBox='0 0 1000 1000' preserveAspectRatio='none' aria-hidden='true'>
+                <g class='kg-rutenett'></g>
+                <path class='kg-linje kg-s200' vector-effect='non-scaling-stroke'></path>
+                <path class='kg-linje kg-s50' vector-effect='non-scaling-stroke'></path>
+                <path class='kg-linje kg-kurs' vector-effect='non-scaling-stroke'></path>
+            </svg>
+            <div class='kg-merker'></div>
+            <div class='kg-sikte' hidden></div>
+            <div class='kg-punkt' hidden></div>
+            <div class='kg-tips' hidden role='status'></div>
+        </div>
+        <div class='kg-x' aria-hidden='true'></div>
+    </div>
+    <script type='application/json' set:html={data} />
+</figure>
+
+<script>
+    type Rad = 'kjop' | 'hold' | 'selg' | 'ikke_kjop';
+    interface Data {
+        serie: [string, number][];
+        rad: { dato: string; kurs: number; rad: Rad }[];
+    }
+
+    const RAD_TEKST: Record<Rad, string> = { kjop: 'Kjøp', hold: 'Hold', selg: 'Selg', ikke_kjop: 'Ikke kjøp' };
+    const tall = new Intl.NumberFormat('nb-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const aksetall = new Intl.NumberFormat('nb-NO', { maximumFractionDigits: 1 });
+    const datoFormat = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const maanedFormat = new Intl.DateTimeFormat('nb-NO', { month: 'short', timeZone: 'UTC' });
+    const somDato = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+    function snitt(kurser: number[], n: number): (number | null)[] {
+        let sum = 0;
+        return kurser.map((k, i) => {
+            sum += k;
+            if (i >= n) sum -= kurser[i - n];
+            return i >= n - 1 ? sum / n : null;
+        });
+    }
+
+    /** About five round numbers covering [min, max]. */
+    function aksemerker(min: number, max: number): number[] {
+        const grov = (max - min) / 4;
+        const steg = [1, 2, 2.5, 5, 10].map((s) => s * 10 ** Math.floor(Math.log10(grov))).find((s) => s >= grov)!;
+        const merker = [];
+        for (let v = Math.ceil(min / steg) * steg; v <= max; v += steg) merker.push(v);
+        return merker;
+    }
+
+    function lagElement(klasse: string, tekst?: string): HTMLDivElement {
+        const el = document.createElement('div');
+        el.className = klasse;
+        if (tekst) el.textContent = tekst;
+        return el;
+    }
+
+    function koble(figur: HTMLElement) {
+        const data: Data = JSON.parse(figur.querySelector('script[type="application/json"]')!.textContent!);
+        const datoer = data.serie.map(([d]) => d);
+        const kurser = data.serie.map(([, k]) => k);
+        const s50 = snitt(kurser, 50);
+        const s200 = snitt(kurser, 200);
+        const radPaaDato = new Map(data.rad.map((r) => [r.dato, r]));
+
+        const flate = figur.querySelector<HTMLElement>('.kg-flate')!;
+        const yAkse = figur.querySelector<HTMLElement>('.kg-y')!;
+        const xAkse = figur.querySelector<HTMLElement>('.kg-x')!;
+        const rutenett = figur.querySelector<SVGGElement>('.kg-rutenett')!;
+        const merker = figur.querySelector<HTMLElement>('.kg-merker')!;
+        const sikte = figur.querySelector<HTMLElement>('.kg-sikte')!;
+        const punkt = figur.querySelector<HTMLElement>('.kg-punkt')!;
+        const tips = figur.querySelector<HTMLElement>('.kg-tips')!;
+        const knapper = Array.from(figur.querySelectorAll<HTMLButtonElement>('.kg-perioder button'));
+
+        let start = 0;
+        let min = 0;
+        let max = 1;
+        let valgt: number | null = null;
+
+        const xPst = (i: number) => ((i - start) / Math.max(datoer.length - 1 - start, 1)) * 100;
+        const yPst = (v: number) => (1 - (v - min) / (max - min)) * 100;
+
+        function sti(verdier: (number | null)[]): string {
+            let d = '';
+            let ny = true;
+            for (let i = start; i < verdier.length; i++) {
+                const v = verdier[i];
+                if (v == null) {
+                    ny = true;
+                    continue;
+                }
+                d += `${ny ? 'M' : 'L'}${(xPst(i) * 10).toFixed(1)} ${(yPst(v) * 10).toFixed(1)}`;
+                ny = false;
+            }
+            return d;
+        }
+
+        function tegn(maaneder: number) {
+            const fra = somDato(datoer[datoer.length - 1]);
+            fra.setUTCMonth(fra.getUTCMonth() - maaneder);
+            const fraIso = fra.toISOString().slice(0, 10);
+            start = Math.max(0, datoer.findIndex((d) => d >= fraIso));
+
+            const synlige = [...kurser.slice(start), ...s50.slice(start), ...s200.slice(start)].filter(
+                (v): v is number => v != null,
+            );
+            const lav = Math.min(...synlige);
+            const hoy = Math.max(...synlige);
+            const luft = (hoy - lav) * 0.08 || 1;
+            min = lav - luft;
+            max = hoy + luft;
+
+            figur.querySelector('.kg-linje.kg-kurs')!.setAttribute('d', sti(kurser));
+            figur.querySelector('.kg-linje.kg-s50')!.setAttribute('d', sti(s50));
+            figur.querySelector('.kg-linje.kg-s200')!.setAttribute('d', sti(s200));
+
+            rutenett.replaceChildren();
+            yAkse.replaceChildren();
+            for (const v of aksemerker(min, max)) {
+                const linje = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const y = String(yPst(v) * 10);
+                linje.setAttribute('x1', '0');
+                linje.setAttribute('x2', '1000');
+                linje.setAttribute('y1', y);
+                linje.setAttribute('y2', y);
+                linje.setAttribute('vector-effect', 'non-scaling-stroke');
+                rutenett.append(linje);
+                const etikett = lagElement('kg-y-merke', aksetall.format(v));
+                etikett.style.top = `${yPst(v)}%`;
+                yAkse.append(etikett);
+            }
+
+            // One label per month, thinned so they never crowd on a phone.
+            xAkse.replaceChildren();
+            const maanedsstart: number[] = [];
+            for (let i = start + 1; i < datoer.length; i++) {
+                if (datoer[i].slice(5, 7) !== datoer[i - 1].slice(5, 7)) maanedsstart.push(i);
+            }
+            const hver = Math.ceil(maanedsstart.length / (flate.clientWidth < 480 ? 4 : 7));
+            maanedsstart.forEach((i, n) => {
+                if (n % hver !== 0) return;
+                const etikett = lagElement('kg-x-merke', maanedFormat.format(somDato(datoer[i])).replace('.', ''));
+                etikett.style.left = `${xPst(i)}%`;
+                xAkse.append(etikett);
+            });
+
+            merker.replaceChildren();
+            for (const r of data.rad) {
+                const i = datoer.indexOf(r.dato);
+                if (i < start) continue;
+                const opp = r.rad === 'kjop' || r.rad === 'hold';
+                const merke = lagElement(`kg-merke ${opp ? 'kg-merke-opp' : 'kg-merke-ned'}`, opp ? '▲' : '▼');
+                merke.style.left = `${xPst(i)}%`;
+                merke.style.top = `${yPst(r.kurs)}%`;
+                merker.append(merke);
+            }
+
+            knapper.forEach((k) => k.setAttribute('aria-pressed', String(Number(k.dataset.maaneder) === maaneder)));
+            if (valgt != null) vis(Math.max(valgt, start));
+        }
+
+        function vis(i: number) {
+            valgt = i;
+            const venstre = xPst(i);
+            sikte.style.left = `${venstre}%`;
+            punkt.style.left = `${venstre}%`;
+            punkt.style.top = `${yPst(kurser[i])}%`;
+
+            const rader: [string, number | null][] = [
+                ['kg-kurs', kurser[i]],
+                ['kg-s50', s50[i]],
+                ['kg-s200', s200[i]],
+            ];
+            const navn = { 'kg-kurs': 'Sluttkurs', 'kg-s50': '50 dagers snitt', 'kg-s200': '200 dagers snitt' };
+            tips.replaceChildren(lagElement('kg-tips-dato', datoFormat.format(somDato(datoer[i]))));
+            for (const [klasse, verdi] of rader) {
+                if (verdi == null) continue;
+                const rad = lagElement('kg-tips-rad');
+                rad.append(lagElement(`kg-strek ${klasse}`), lagElement('kg-tips-verdi', tall.format(verdi)));
+                rad.append(lagElement('kg-tips-navn', navn[klasse as keyof typeof navn]));
+                tips.append(rad);
+            }
+            const r = radPaaDato.get(datoer[i]);
+            if (r) tips.append(lagElement('kg-tips-rad kg-tips-rad-rad', `Råd: ${RAD_TEKST[r.rad]}`));
+
+            tips.classList.toggle('til-venstre', venstre > 60);
+            tips.style.left = `${venstre}%`;
+            sikte.hidden = punkt.hidden = tips.hidden = false;
+        }
+
+        function skjul() {
+            valgt = null;
+            sikte.hidden = punkt.hidden = tips.hidden = true;
+        }
+
+        flate.addEventListener('pointermove', (e) => {
+            const boks = flate.getBoundingClientRect();
+            const andel = Math.min(Math.max((e.clientX - boks.left) / boks.width, 0), 1);
+            vis(Math.round(start + andel * (datoer.length - 1 - start)));
+        });
+        flate.addEventListener('pointerleave', skjul);
+        flate.addEventListener('blur', skjul);
+        flate.addEventListener('keydown', (e) => {
+            const steg = { ArrowLeft: -1, ArrowRight: 1, Home: -Infinity, End: Infinity }[e.key];
+            if (steg == null) return;
+            e.preventDefault();
+            const fra = valgt ?? datoer.length - 1;
+            vis(Math.min(Math.max(fra + steg, start), datoer.length - 1));
+        });
+        knapper.forEach((k) => k.addEventListener('click', () => tegn(Number(k.dataset.maaneder))));
+
+        tegn(6);
+        let bredde = flate.clientWidth;
+        new ResizeObserver(() => {
+            if (flate.clientWidth === bredde) return;
+            bredde = flate.clientWidth;
+            tegn(Number(knapper.find((k) => k.getAttribute('aria-pressed') === 'true')?.dataset.maaneder ?? 6));
+        }).observe(flate);
+    }
+
+    document.querySelectorAll<HTMLElement>('[data-kursgraf]').forEach(koble);
+</script>

@@ -1,0 +1,59 @@
+---
+import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../components/radgiver/Datafeil.astro';
+import RadMerke from '../../components/radgiver/RadMerke.astro';
+import { hentVurdering, sorterAnbefalinger, ukeDatoer, type Vurdering } from '../../lib/radgiver/data';
+import { dato, ukenummer } from '../../lib/radgiver/format';
+
+export const prerender = false;
+
+let innhold;
+try {
+    const datoer = await ukeDatoer();
+    const vurderinger = await Promise.all(datoer.map(hentVurdering));
+    innhold = { uker: datoer.map((d, i) => ({ dato: d, vurdering: vurderinger[i] })) };
+} catch (feil) {
+    innhold = { feil };
+}
+
+const uker: { dato: string; vurdering: Vurdering }[] = 'uker' in innhold ? innhold.uker : [];
+---
+
+<RadgiverLayout title='Arkiv' aktiv='arkiv'>
+    {
+        'feil' in innhold ? (
+            <Datafeil feil={innhold.feil} />
+        ) : (
+            <>
+                <section class='rg-ingress'>
+                    <p class='rg-overtittel'>{uker.length} {uker.length === 1 ? 'uke' : 'uker'}</p>
+                    <h1>Arkiv</h1>
+                </section>
+                {uker.length === 0 ? (
+                    <div class='rg-kort rg-tom'>
+                        <p>Ingen rapporter ennå.</p>
+                    </div>
+                ) : (
+                    <ol class='arkiv'>
+                        {uker.map((uke) => (
+                            <li class='rg-kort arkiv-uke'>
+                                <a class='arkiv-lenke' href={`/radgiver/rapport/${uke.dato}`}>
+                                    <span class='rg-overtittel'>Uke {ukenummer(uke.dato)}</span>
+                                    <span class='arkiv-dato'>{dato(uke.dato)}</span>
+                                </a>
+                                <ul class='arkiv-rad'>
+                                    {sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger).map((a) => (
+                                        <li>
+                                            <RadMerke rad={a.rad} />
+                                            <span>{a.ticker}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </li>
+                        ))}
+                    </ol>
+                )}
+            </>
+        )
+    }
+</RadgiverLayout>

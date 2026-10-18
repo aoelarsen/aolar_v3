@@ -1,0 +1,17 @@
+---
+/** Shown instead of the page content when the stock tool's files can't be read. */
+export interface Props {
+    feil: unknown;
+}
+
+const { feil } = Astro.props;
+console.error('Rådgiver: klarte ikke å hente data:', feil);
+---
+
+<div class='rg-kort rg-tom' role='alert'>
+    <h1>Fikk ikke hentet rapportene</h1>
+    <p>
+        GitHub svarte ikke som forventet. Prøv igjen om litt. Fortsetter det, sjekk at <code>GITHUB_TOKEN_VERKTOY</code>
+        på Netlify fortsatt er gyldig og kan lese aolarAksjeVerktoy.
+    </p>
+</div>

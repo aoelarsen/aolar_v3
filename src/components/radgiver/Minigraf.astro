@@ -1,0 +1,33 @@
+---
+/**
+ * Three-month sparkline for a stock card. Drawn into a stretched viewBox with
+ * non-scaling strokes, so it fills any card width and the line stays 2px.
+ */
+import type { Kursserie } from '../../lib/radgiver/data';
+
+export interface Props {
+    serie: Kursserie | undefined;
+    /** Trading days to show; about three months. */
+    dager?: number;
+}
+
+const { serie, dager = 63 } = Astro.props;
+const punkter = (serie ?? []).slice(-dager);
+const kurser = punkter.map(([, k]) => k);
+const min = Math.min(...kurser);
+const max = Math.max(...kurser);
+const spenn = max - min || 1;
+const x = (i: number) => (i / Math.max(punkter.length - 1, 1)) * 100;
+const y = (k: number) => 4 + (1 - (k - min) / spenn) * 32;
+const linje = punkter.map(([, k], i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(2)} ${y(k).toFixed(2)}`).join('');
+const flate = `${linje}L100 40L0 40Z`;
+---
+
+{
+    punkter.length > 1 && (
+        <svg class='minigraf' viewBox='0 0 100 40' preserveAspectRatio='none' aria-hidden='true'>
+            <path class='minigraf-flate' d={flate} />
+            <path class='minigraf-linje' d={linje} vector-effect='non-scaling-stroke' />
+        </svg>
+    )
+}

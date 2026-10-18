@@ -1,0 +1,1317 @@
+/*
+ * The signed-in /radgiver pages. Builds on the theme tokens in global.css;
+ * the only new colours are the chart series, validated for colour-blind
+ * separation and contrast against each theme's surface.
+ */
+:root {
+    --rg-kort: color-mix(in srgb, var(--ink) 4%, var(--surface));
+    --rg-kant: color-mix(in srgb, var(--ink) 14%, transparent);
+    --rg-dempet: color-mix(in srgb, var(--ink) 68%, var(--surface));
+    --rg-rutenett: color-mix(in srgb, var(--ink) 10%, transparent);
+    --rg-pa-fylt: var(--brand-cream);
+
+    --graf-kurs: #23805e;
+    --graf-s50: #b07c10;
+    --graf-s200: #5470d0;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --rg-pa-fylt: var(--brand-night);
+        --graf-kurs: #36a479;
+        --graf-s50: #b98c2a;
+        --graf-s200: #6f86da;
+    }
+}
+
+:root[data-theme='dark'] {
+    --rg-pa-fylt: var(--brand-night);
+    --graf-kurs: #36a479;
+    --graf-s50: #b98c2a;
+    --graf-s200: #6f86da;
+}
+
+body {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+}
+
+/* ---------- Frame ---------- */
+
+.rg-wrap {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+    .rg-wrap {
+        padding-inline: 2rem;
+    }
+}
+
+.rg-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1rem 0.75rem;
+    padding-block: 1.25rem 0;
+}
+
+.rg-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.rg-emblem {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.rg-brand-text {
+    display: grid;
+    line-height: 1.2;
+}
+
+.rg-brand-sub {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--link);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rg-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.rg-header-actions form {
+    margin: 0;
+}
+
+.rg-ghost-button {
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--rg-kant);
+    border-radius: 0.25rem;
+    padding: 0.3rem 0.65rem;
+    cursor: pointer;
+}
+
+.rg-ghost-button:hover,
+.rg-ghost-button:focus-visible {
+    background: var(--ink);
+    color: var(--surface);
+}
+
+.rg-tabs {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--rg-kant);
+    scrollbar-width: none;
+}
+
+.rg-tab {
+    flex-shrink: 0;
+    padding: 0.6rem 0.75rem;
+    color: var(--rg-dempet);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+}
+
+.rg-tab:hover {
+    color: var(--ink);
+}
+
+@media (max-width: 420px) {
+    .rg-tab {
+        padding-inline: 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+.rg-tab[aria-current='page'] {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+}
+
+.rg-main {
+    padding-block: 1.5rem 2.5rem;
+    min-width: 0;
+}
+
+.rg-footer {
+    border-top: 1px solid var(--rg-kant);
+    padding-block: 1.25rem;
+    font-size: 0.8125rem;
+    color: var(--rg-dempet);
+    text-align: center;
+}
+
+.rg-footer p {
+    margin: 0;
+}
+
+/* ---------- Shared pieces ---------- */
+
+.rg-kort {
+    background: var(--rg-kort);
+    border: 1px solid var(--rg-kant);
+    border-radius: 0.625rem;
+}
+
+.rg-seksjon {
+    padding: 1.25rem;
+    margin-block: 1rem;
+}
+
+@media (min-width: 768px) {
+    .rg-seksjon {
+        padding: 1.5rem 1.75rem;
+    }
+}
+
+.rg-seksjon > h2:first-child {
+    margin-top: 0;
+}
+
+.rg-seksjon h2 {
+    font-size: 1.25rem;
+}
+
+.rg-seksjon h3 {
+    font-size: 1.0625rem;
+    margin: 1.25rem 0 0.5rem;
+}
+
+.rg-seksjon h4 {
+    font-size: 0.9375rem;
+    margin: 1rem 0 0.25rem;
+}
+
+.rg-seksjon p {
+    margin: 0.5rem 0;
+}
+
+.rg-tom {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    max-width: 36rem;
+    margin: 2rem auto;
+}
+
+.rg-tom h1 {
+    font-size: 1.5rem;
+    margin-top: 0;
+}
+
+.rg-overtittel {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--link);
+}
+
+.rg-ingress {
+    margin-bottom: 1.5rem;
+}
+
+.rg-ingress h1 {
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    line-height: 1.15;
+    margin: 0.25rem 0 0.75rem;
+}
+
+.rg-kommentar {
+    max-width: 52rem;
+    font-size: 1.0625rem;
+    margin: 0;
+}
+
+.rg-dempet {
+    color: var(--rg-dempet);
+}
+
+.rg-fotnote {
+    margin-top: 1.5rem;
+    color: var(--rg-dempet);
+    font-size: 0.9375rem;
+}
+
+.rg-tilbake {
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.rg-melding {
+    margin: 1rem 0 0;
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.375rem;
+    border-left: 4px solid;
+    font-size: 0.9375rem;
+}
+
+.rg-melding-feil {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.rg-melding-advarsel {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    display: inline-block;
+}
+
+.rg-liste {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+}
+
+.rg-liste li + li {
+    margin-top: 0.25rem;
+}
+
+.ticker {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--rg-dempet);
+}
+
+.kurs {
+    font-weight: 700;
+    font-size: 1.375rem;
+    letter-spacing: -0.01em;
+}
+
+.kurs-stor {
+    font-size: clamp(2rem, 7vw, 2.75rem);
+    line-height: 1;
+}
+
+.tall {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Advice label. Text always says the advice; colour only reinforces it. */
+.rad-merke {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1.5px solid transparent;
+}
+
+.rad-stor {
+    font-size: 0.9375rem;
+    padding: 0.3rem 0.9rem;
+}
+
+.rad-kjop {
+    background: var(--success);
+    color: var(--rg-pa-fylt);
+}
+
+.rad-selg {
+    background: var(--danger);
+    color: var(--rg-pa-fylt);
+}
+
+.rad-hold {
+    border-color: var(--accent);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.rad-ikke_kjop {
+    border-color: var(--field-border);
+    color: var(--ink);
+}
+
+.sikkerhet {
+    display: inline-flex;
+    gap: 3px;
+    vertical-align: middle;
+}
+
+.sikkerhet-prikk {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+}
+
+.sikkerhet-prikk.er-fylt {
+    background: var(--ink);
+}
+
+.endring {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.endring span[aria-hidden] {
+    font-size: 0.7em;
+}
+
+.endring-opp {
+    color: var(--success);
+}
+
+.endring-ned {
+    color: var(--danger);
+}
+
+.endring-periode {
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: var(--rg-dempet);
+}
+
+.risiko {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.25rem;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.risiko-høy {
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.risiko-middels {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.signal {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.05rem 0.45rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.signal-positiv {
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+.signal-negativ {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.signal-noytral {
+    color: var(--rg-dempet);
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.kilder {
+    font-size: 0.8125rem;
+    color: var(--rg-dempet);
+}
+
+/* ---------- Tables ---------- */
+
+.rg-tabell-rull {
+    overflow-x: auto;
+    margin-inline: -0.25rem;
+}
+
+.rg-tabell {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+}
+
+.rg-tabell th,
+.rg-tabell td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--rg-kant);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.rg-tabell thead th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rg-dempet);
+    white-space: nowrap;
+}
+
+.rg-tabell th.tall,
+.rg-tabell td.tall {
+    text-align: right;
+}
+
+.rg-tabell tbody th {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.rg-tabell tbody tr:last-child > * {
+    border-bottom: none;
+}
+
+.rg-tabellvisning {
+    margin-top: 1rem;
+}
+
+.rg-tabellvisning summary {
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--link);
+}
+
+.rg-tabellvisning .rg-tabell-rull {
+    max-height: 22rem;
+    overflow-y: auto;
+    margin-top: 0.5rem;
+}
+
+/* ---------- Login ---------- */
+
+.rg-innlogging {
+    display: grid;
+    place-items: center;
+    min-height: 60vh;
+}
+
+.rg-innlogging-kort {
+    width: 100%;
+    max-width: 26rem;
+    padding: 2rem 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.rg-innlogging-kort h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.rg-innlogging-kort p {
+    margin: 0;
+}
+
+.rg-felt {
+    display: grid;
+    gap: 0.35rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-top: 0.5rem;
+}
+
+.rg-felt input {
+    font: inherit;
+    font-weight: 400;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--field-border);
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.rg-knapp {
+    font: inherit;
+    font-weight: 700;
+    padding: 0.7rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    background: var(--ink);
+    color: var(--surface);
+    cursor: pointer;
+}
+
+.rg-knapp:hover,
+.rg-knapp:focus-visible {
+    background: var(--link);
+}
+
+/* ---------- Ukens råd ---------- */
+
+.rg-telling {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+}
+
+.rg-telling li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+}
+
+.rg-kortgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.aksjekort {
+    position: relative;
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.1rem 1.25rem;
+    border-top: 4px solid var(--rg-kant);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.aksjekort-kjop {
+    border-top-color: var(--success);
+}
+
+.aksjekort-selg {
+    border-top-color: var(--danger);
+}
+
+.aksjekort-hold {
+    border-top-color: var(--accent);
+}
+
+.aksjekort:hover,
+.aksjekort:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aksjekort {
+        transition: none;
+    }
+
+    .aksjekort:hover,
+    .aksjekort:focus-within {
+        transform: none;
+    }
+}
+
+.aksjekort-topp {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.aksjekort h2 {
+    margin: 0;
+    font-size: 1.1875rem;
+    line-height: 1.25;
+}
+
+/* The heading link covers the whole card, so anywhere on it opens the stock. */
+.aksjekort-lenke {
+    color: inherit;
+    text-decoration: none;
+}
+
+.aksjekort-lenke::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.aksjekort-lenke:focus-visible {
+    outline: none;
+}
+
+.aksjekort:has(.aksjekort-lenke:focus-visible) {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
+
+.aksjekort-meta {
+    margin: -0.5rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--rg-dempet);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.eies {
+    font-weight: 700;
+    color: var(--link);
+}
+
+.aksjekort-rad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.aksjekort-kurs {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.aksjekort-graf {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.aksjekort-graf .endring {
+    justify-self: end;
+    font-size: 0.875rem;
+}
+
+.minigraf {
+    display: block;
+    width: 100%;
+    height: 44px;
+    overflow: visible;
+}
+
+.minigraf-linje {
+    fill: none;
+    stroke: var(--graf-kurs);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.minigraf-flate {
+    fill: var(--graf-kurs);
+    opacity: 0.1;
+}
+
+.aksjekort-bunn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rg-kant);
+}
+
+.les-mer {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--link);
+}
+
+/* ---------- Stock page ---------- */
+
+.aksje-topp {
+    display: grid;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (min-width: 768px) {
+    .aksje-topp {
+        grid-template-columns: 1fr auto;
+    }
+}
+
+.aksje-topp h1 {
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    margin: 0.25rem 0 0.75rem;
+    line-height: 1.15;
+}
+
+.aksje-kurs {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+}
+
+.aksje-topp .rg-dempet {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+}
+
+.aksje-rad {
+    display: grid;
+    justify-items: start;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    min-width: 12rem;
+}
+
+.nokkeltall {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+}
+
+.nokkeltall > div {
+    background: var(--rg-kort);
+    border: 1px solid var(--rg-kant);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.nokkeltall dt {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rg-dempet);
+}
+
+.nokkeltall dd {
+    margin: 0.25rem 0 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.nokkeltall-stor dd {
+    font-size: 1.5rem;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.nokkeltall-stor .nokkeltall-hoved dd {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.nokkeltall-under {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--rg-dempet);
+    line-height: 1.3;
+}
+
+.aksje-detaljer {
+    display: grid;
+    gap: 0 1rem;
+}
+
+@media (min-width: 1024px) {
+    .aksje-detaljer {
+        grid-template-columns: 2fr 3fr;
+        align-items: start;
+    }
+}
+
+.radgivere {
+    display: grid;
+    gap: 1rem;
+}
+
+.radgiver + .radgiver {
+    border-top: 1px solid var(--rg-kant);
+    padding-top: 0.5rem;
+}
+
+.radgiver h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.meldinger {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.meldinger li {
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--rg-kant);
+}
+
+.meldinger p {
+    margin: 0.2rem 0 0;
+    font-size: 0.9375rem;
+}
+
+.viktighet {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--rg-dempet);
+    margin: 0 0.4rem;
+}
+
+.melding-tittel {
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.styrker-svakheter {
+    display: grid;
+    gap: 0 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .styrker-svakheter {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* ---------- Price chart ---------- */
+
+.kursgraf {
+    margin: 0;
+}
+
+.kg-topp {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.kg-forklaring {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--rg-dempet);
+}
+
+.kg-forklaring li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.kg-strek {
+    display: inline-block;
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    flex-shrink: 0;
+}
+
+.kg-strek.kg-kurs {
+    background: var(--graf-kurs);
+}
+
+.kg-strek.kg-s50 {
+    background: var(--graf-s50);
+}
+
+.kg-strek.kg-s200 {
+    background: var(--graf-s200);
+}
+
+.kg-symbol {
+    font-size: 0.75rem;
+}
+
+.kg-symbol-opp {
+    color: var(--success);
+}
+
+.kg-symbol-ned {
+    color: var(--danger);
+}
+
+.kg-perioder {
+    display: inline-flex;
+    border: 1px solid var(--rg-kant);
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.kg-perioder button {
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--rg-dempet);
+    cursor: pointer;
+}
+
+.kg-perioder button + button {
+    border-left: 1px solid var(--rg-kant);
+}
+
+.kg-perioder button[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--surface);
+}
+
+.kg-ramme {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+}
+
+.kg-y {
+    position: relative;
+    width: 3.25rem;
+}
+
+.kg-y-merke {
+    position: absolute;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    color: var(--rg-dempet);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.kg-flate {
+    position: relative;
+    height: clamp(14rem, 40vw, 22rem);
+    touch-action: pan-y;
+    cursor: crosshair;
+}
+
+.kg-flate svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.kg-rutenett line {
+    stroke: var(--rg-rutenett);
+    stroke-width: 1px;
+}
+
+.kg-linje {
+    fill: none;
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.kg-linje.kg-kurs {
+    stroke: var(--graf-kurs);
+}
+
+.kg-linje.kg-s50 {
+    stroke: var(--graf-s50);
+}
+
+.kg-linje.kg-s200 {
+    stroke: var(--graf-s200);
+}
+
+.kg-merker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.kg-merke {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 0.875rem;
+    line-height: 1;
+    text-shadow:
+        0 0 2px var(--surface),
+        0 0 2px var(--surface),
+        0 0 2px var(--surface);
+}
+
+.kg-merke-opp {
+    color: var(--success);
+}
+
+.kg-merke-ned {
+    color: var(--danger);
+}
+
+.kg-sikte {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--rg-dempet);
+    pointer-events: none;
+}
+
+.kg-punkt {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--graf-kurs);
+    box-shadow: 0 0 0 2px var(--surface);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.kg-tips {
+    position: absolute;
+    top: 0.5rem;
+    transform: translateX(0.75rem);
+    min-width: 11rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.375rem;
+    background: var(--surface);
+    border: 1px solid var(--rg-kant);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--ink) 14%, transparent);
+    font-size: 0.8125rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.kg-tips.til-venstre {
+    transform: translateX(calc(-100% - 0.75rem));
+}
+
+.kg-tips-dato {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.kg-tips-rad {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.kg-tips-verdi {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.kg-tips-navn {
+    color: var(--rg-dempet);
+}
+
+.kg-tips-rad-rad {
+    margin-top: 0.25rem;
+    font-weight: 700;
+}
+
+.kg-x {
+    grid-column: 2;
+    position: relative;
+    height: 1.75rem;
+    border-top: 1px solid var(--rg-kant);
+}
+
+.kg-x-merke {
+    position: absolute;
+    top: 0.35rem;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: var(--rg-dempet);
+    white-space: nowrap;
+}
+
+/* ---------- Report ---------- */
+
+.rapport-bla {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.rapport-bla a {
+    text-decoration: none;
+}
+
+.rapport-mellomtittel {
+    font-size: 1.375rem;
+    margin: 2rem 0 0;
+}
+
+.rapport-aksje {
+    scroll-margin-top: 1rem;
+}
+
+.rapport-aksje-topp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.rapport-aksje-topp h3 {
+    margin: 0;
+    font-size: 1.1875rem;
+}
+
+.rapport-aksje-topp h3 a {
+    text-decoration: none;
+    color: var(--ink);
+}
+
+.rapport-radgivere {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+}
+
+.rapport-radgivere dt {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--rg-dempet);
+}
+
+.rapport-radgivere dd {
+    margin: 0.15rem 0 0;
+}
+
+.sektorer {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 0.75rem;
+}
+
+.sektorer li {
+    border: 1px solid var(--rg-kant);
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.9rem;
+}
+
+.sektor-topp {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.sektorer p {
+    margin: 0.35rem 0 0;
+    font-size: 0.9375rem;
+}
+
+/* ---------- Archive ---------- */
+
+.arkiv {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.arkiv-uke {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .arkiv-uke {
+        grid-template-columns: 14rem 1fr;
+        align-items: center;
+    }
+}
+
+.arkiv-lenke {
+    display: grid;
+    color: inherit;
+    text-decoration: none;
+}
+
+.arkiv-lenke:hover .arkiv-dato {
+    text-decoration: underline;
+}
+
+.arkiv-dato {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.arkiv-rad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.arkiv-rad li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* ---------- Accuracy ---------- */
+
+.utfall {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.utfall-treff {
+    color: var(--success);
+}
+
+.utfall-bom {
+    color: var(--danger);
+}
+
+.utfall-venter {
+    color: var(--rg-dempet);
+    font-weight: 400;
+}

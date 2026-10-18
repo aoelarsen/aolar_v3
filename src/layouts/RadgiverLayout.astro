@@ -1,0 +1,93 @@
+---
+/**
+ * Layout for the signed-in /radgiver pages. Norwegian only and outside the
+ * site's i18n routing, so it sets its own lang and passes the locale to the
+ * shared controls rather than relying on Astro.currentLocale.
+ */
+import BrandEmblem from '../components/BrandEmblem.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import Wordmark from '../components/Wordmark.astro';
+import '../styles/global.css';
+import '../styles/pages/radgiver.css';
+
+export interface Props {
+    title: string;
+    /** Which tab in the sub-navigation is current. Omit to hide the navigation (login page). */
+    aktiv?: 'rad' | 'rapport' | 'arkiv' | 'treff' | 'aksje';
+}
+
+const { title, aktiv } = Astro.props;
+const lenker = [
+    { id: 'rad', href: '/radgiver', tekst: 'Ukens råd' },
+    { id: 'rapport', href: '/radgiver/rapport', tekst: 'Rapport' },
+    { id: 'arkiv', href: '/radgiver/arkiv', tekst: 'Arkiv' },
+    { id: 'treff', href: '/radgiver/treff', tekst: 'Treffsikkerhet' },
+];
+---
+
+<!doctype html>
+<html lang='nb'>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='viewport' content='width=device-width' />
+        <meta name='robots' content='noindex, nofollow' />
+        <link rel='icon' href='/brand/favicon.ico' sizes='48x48' />
+        <link rel='icon' type='image/svg+xml' href='/brand/favicon.svg' />
+        <meta name='theme-color' content='#f1ede3' media='(prefers-color-scheme: light)' />
+        <meta name='theme-color' content='#12201a' media='(prefers-color-scheme: dark)' />
+        <title>{title} · AOLar Rådgiver</title>
+        <script is:inline>
+            (function () {
+                var theme = localStorage.getItem('aolar-theme');
+                if (theme === 'light' || theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', theme);
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <a href='#main-content' class='skip-link'>Hopp til hovedinnhold</a>
+        <div class='rg-wrap'>
+            <header class='rg-header'>
+                <a href='/nb' class='rg-brand'>
+                    <BrandEmblem variant='small' class='rg-emblem' />
+                    <span class='rg-brand-text'>
+                        <Wordmark />
+                        <span class='rg-brand-sub'>Rådgiver</span>
+                    </span>
+                </a>
+                <div class='rg-header-actions'>
+                    <ThemeToggle locale='nb' />
+                    {
+                        aktiv && (
+                            <form method='post' action='/radgiver/logg-ut'>
+                                <button type='submit' class='rg-ghost-button'>
+                                    Logg ut
+                                </button>
+                            </form>
+                        )
+                    }
+                </div>
+                {
+                    aktiv && (
+                        <nav class='rg-tabs' aria-label='Rådgiver'>
+                            {lenker.map((l) => (
+                                <a href={l.href} class='rg-tab' aria-current={l.id === aktiv ? 'page' : undefined}>
+                                    {l.tekst}
+                                </a>
+                            ))}
+                        </nav>
+                    )
+                }
+            </header>
+            <main id='main-content' class='rg-main'>
+                <slot />
+            </main>
+            <footer class='rg-footer'>
+                <p>
+                    Rådene er beslutningsstøtte fra AI-rådgivere, ikke garantier. Hver handel godkjennes av et menneske.
+                </p>
+            </footer>
+        </div>
+    </body>
+</html>

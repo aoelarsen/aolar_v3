@@ -1,0 +1,29 @@
+---
+import RadgiverLayout from '../../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../../components/radgiver/Datafeil.astro';
+import { ukeDatoer } from '../../../lib/radgiver/data';
+
+export const prerender = false;
+
+// The "Rapport" tab always opens the newest week.
+let feil: unknown;
+try {
+    const [siste] = await ukeDatoer();
+    if (siste) return Astro.redirect(`/radgiver/rapport/${siste}`, 302);
+} catch (e) {
+    feil = e;
+}
+---
+
+<RadgiverLayout title='Rapport' aktiv='rapport'>
+    {
+        feil ? (
+            <Datafeil feil={feil} />
+        ) : (
+            <div class='rg-kort rg-tom'>
+                <h1>Ingen rapporter ennå</h1>
+                <p>Den første ukesrapporten dukker opp her når den er lagt i rapporter/ i aksjeverktøyet.</p>
+            </div>
+        )
+    }
+</RadgiverLayout>

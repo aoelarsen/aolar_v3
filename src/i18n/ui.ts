@@ -56,6 +56,7 @@ interface ContactContent {
 interface FooterContent {
     orgNumberLabel: string;
     orgNumberValue: string;
+    loginLabel: string;
 }
 
 interface Ui {
@@ -96,6 +97,7 @@ export const ui: Record<Locale, Ui> = {
         footer: {
             orgNumberLabel: 'Organisation number',
             orgNumberValue: '938 383 529',
+            loginLabel: 'Log in',
         },
         pages: {
             home: {
@@ -150,6 +152,7 @@ export const ui: Record<Locale, Ui> = {
         footer: {
             orgNumberLabel: 'Organisasjonsnummer',
             orgNumberValue: '938 383 529',
+            loginLabel: 'Logg inn',
         },
         pages: {
             home: {

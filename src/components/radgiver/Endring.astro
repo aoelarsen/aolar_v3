@@ -1,0 +1,19 @@
+---
+import { prosent, retning } from '../../lib/radgiver/format';
+
+export interface Props {
+    verdi: number | null | undefined;
+    /** What period the change covers, e.g. '1 uke'. */
+    periode?: string;
+}
+
+const { verdi, periode } = Astro.props;
+const r = retning(verdi);
+const pil = { opp: '▲', ned: '▼', flat: '' }[r];
+---
+
+<span class:list={['endring', `endring-${r}`]}>
+    {pil && <span aria-hidden='true'>{pil}</span>}
+    {prosent(verdi)}
+    {periode && <span class='endring-periode'>{periode}</span>}
+</span>

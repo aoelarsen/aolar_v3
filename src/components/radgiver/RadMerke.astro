@@ -1,0 +1,12 @@
+---
+import { RAD_TEKST, type Rad } from '../../lib/radgiver/data';
+
+export interface Props {
+    rad: Rad;
+    stor?: boolean;
+}
+
+const { rad, stor = false } = Astro.props;
+---
+
+<span class:list={['rad-merke', `rad-${rad}`, { 'rad-stor': stor }]}>{RAD_TEKST[rad]}</span>

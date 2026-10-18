@@ -1,0 +1,224 @@
+---
+import RadgiverLayout from '../../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../../components/radgiver/Datafeil.astro';
+import Endring from '../../../components/radgiver/Endring.astro';
+import RadMerke from '../../../components/radgiver/RadMerke.astro';
+import Sikkerhet from '../../../components/radgiver/Sikkerhet.astro';
+import {
+    GithubFeil,
+    SIGNAL_TEKST,
+    delRisiko,
+    erGyldigDato,
+    hentUke,
+    sorterAnbefalinger,
+    ukeDatoer,
+    type Signal,
+} from '../../../lib/radgiver/data';
+import { dato, kurs, ukenummer } from '../../../lib/radgiver/format';
+
+export const prerender = false;
+
+const valgt = Astro.params.dato ?? '';
+if (!erGyldigDato(valgt)) return new Response('Fant ikke rapporten', { status: 404 });
+
+let innhold;
+try {
+    const [uke, alle] = await Promise.all([hentUke(valgt), ukeDatoer()]);
+    innhold = { uke, alle };
+} catch (feil) {
+    if (feil instanceof GithubFeil && feil.message.startsWith('Fant ikke')) {
+        return new Response('Fant ikke rapporten', { status: 404 });
+    }
+    innhold = { feil };
+}
+
+const uke = 'uke' in innhold ? innhold.uke : null;
+const alle = 'alle' in innhold ? innhold.alle : [];
+const plass = alle.indexOf(valgt);
+const nyere = plass > 0 ? alle[plass - 1] : null;
+const eldre = plass >= 0 && plass < alle.length - 1 ? alle[plass + 1] : null;
+
+const navn = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a.navn]));
+const anbefalinger = uke ? sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger) : [];
+const per = <T extends { ticker: string }>(liste: T[] = []) => new Map(liste.map((x) => [x.ticker, x]));
+const nyheter = per(uke?.vurdering.nyheter);
+const teknisk = per(uke?.vurdering.teknisk);
+const fundamental = per(uke?.vurdering.fundamental);
+const signal = (s: Signal | undefined) => s ?? null;
+---
+
+<RadgiverLayout title={`Ukesrapport ${valgt}`} aktiv='rapport'>
+    {
+        'feil' in innhold ? (
+            <Datafeil feil={innhold.feil} />
+        ) : (
+            uke && (
+                <article class='rapport'>
+                    <nav class='rapport-bla' aria-label='Andre uker'>
+                        {eldre ? (
+                            <a class='link' href={`/radgiver/rapport/${eldre}`}>
+                                ← Uke {ukenummer(eldre)}
+                            </a>
+                        ) : (
+                            <span />
+                        )}
+                        {nyere && (
+                            <a class='link' href={`/radgiver/rapport/${nyere}`}>
+                                Uke {ukenummer(nyere)} →
+                            </a>
+                        )}
+                    </nav>
+
+                    <header class='rg-ingress'>
+                        <p class='rg-overtittel'>
+                            Uke {ukenummer(uke.dato)} · {dato(uke.dato)}
+                        </p>
+                        <h1>Ukesrapport</h1>
+                        <p class='rg-kommentar'>{uke.vurdering.portefolje.markedskommentar}</p>
+                    </header>
+
+                    <section class='rg-kort rg-seksjon'>
+                        <h2>Oversikt</h2>
+                        <div class='rg-tabell-rull'>
+                            <table class='rg-tabell'>
+                                <thead>
+                                    <tr>
+                                        <th scope='col'>Aksje</th>
+                                        <th scope='col'>Råd</th>
+                                        <th scope='col'>Sikkerhet</th>
+                                        <th scope='col' class='tall'>Kurs</th>
+                                        <th scope='col' class='tall'>1 uke</th>
+                                        <th scope='col' class='tall'>3 mnd</th>
+                                        <th scope='col'>Nyheter</th>
+                                        <th scope='col'>Teknisk</th>
+                                        <th scope='col'>Fundamental</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {anbefalinger.map((a) => {
+                                        const k = uke.ukedata.kurser[a.ticker];
+                                        const signaler = [
+                                            signal(nyheter.get(a.ticker)?.samlet_signal),
+                                            signal(teknisk.get(a.ticker)?.signal),
+                                            signal(fundamental.get(a.ticker)?.signal),
+                                        ];
+                                        return (
+                                            <tr>
+                                                <th scope='row'>
+                                                    <a class='link' href={`#${a.ticker}`}>
+                                                        {navn.get(a.ticker) ?? a.ticker}
+                                                    </a>
+                                                </th>
+                                                <td>
+                                                    <RadMerke rad={a.rad} />
+                                                </td>
+                                                <td>
+                                                    <Sikkerhet verdi={a.sikkerhet} />
+                                                </td>
+                                                <td class='tall'>{kurs(k?.siste_kurs)}</td>
+                                                <td class='tall'>
+                                                    <Endring verdi={k?.endring_1_uke_pst} />
+                                                </td>
+                                                <td class='tall'>
+                                                    <Endring verdi={k?.endring_3_mnd_pst} />
+                                                </td>
+                                                {signaler.map((s) => (
+                                                    <td>{s ? <span class:list={['signal', `signal-${s}`]}>{SIGNAL_TEKST[s]}</span> : '–'}</td>
+                                                ))}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {uke.vurdering.makro && (
+                        <section class='rg-kort rg-seksjon'>
+                            <h2>Makro</h2>
+                            <p>{uke.vurdering.makro.oppsummering}</p>
+                            <ul class='sektorer'>
+                                {uke.vurdering.makro.sektorer.map((s) => (
+                                    <li>
+                                        <div class='sektor-topp'>
+                                            <strong>{s.sektor}</strong>
+                                            <span class:list={['signal', `signal-${s.signal}`]}>{SIGNAL_TEKST[s.signal]}</span>
+                                        </div>
+                                        <p>{s.begrunnelse}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+
+                    <h2 class='rapport-mellomtittel'>Per aksje</h2>
+                    {anbefalinger.map((a) => {
+                        const { risiko, tekst } = delRisiko(a.begrunnelse);
+                        const n = nyheter.get(a.ticker);
+                        const t = teknisk.get(a.ticker);
+                        const f = fundamental.get(a.ticker);
+                        return (
+                            <section class='rg-kort rg-seksjon rapport-aksje' id={a.ticker}>
+                                <div class='rapport-aksje-topp'>
+                                    <h3>
+                                        <a class='link' href={`/radgiver/aksje/${a.ticker}`}>
+                                            {navn.get(a.ticker) ?? a.ticker}
+                                        </a>{' '}
+                                        <span class='ticker'>{a.ticker}</span>
+                                    </h3>
+                                    <RadMerke rad={a.rad} />
+                                    <Sikkerhet verdi={a.sikkerhet} />
+                                    {risiko && <span class:list={['risiko', `risiko-${risiko}`]}>Risiko: {risiko}</span>}
+                                </div>
+                                <p>{tekst}</p>
+                                {a.risikoer.length > 0 && (
+                                    <>
+                                        <h4>Risikoer</h4>
+                                        <ul class='rg-liste'>
+                                            {a.risikoer.map((r) => (
+                                                <li>{r}</li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                )}
+                                <dl class='rapport-radgivere'>
+                                    {n && (
+                                        <div>
+                                            <dt>Nyheter</dt>
+                                            <dd>{n.oppsummering}</dd>
+                                        </div>
+                                    )}
+                                    {t && (
+                                        <div>
+                                            <dt>Teknisk · trend {t.trend}</dt>
+                                            <dd>{t.begrunnelse}</dd>
+                                        </div>
+                                    )}
+                                    {f && (
+                                        <div>
+                                            <dt>Fundamentalt</dt>
+                                            <dd>{f.oppsummering}</dd>
+                                        </div>
+                                    )}
+                                </dl>
+                                {a.kilder.length > 0 && <p class='kilder'>Kilder: {a.kilder.join(', ')}</p>}
+                            </section>
+                        );
+                    })}
+
+                    {uke.ukedata.feil.length > 0 && (
+                        <section class='rg-kort rg-seksjon' id='datafeil'>
+                            <h2>Datafeil</h2>
+                            <p>Disse dataene manglet, og rådene for de berørte aksjene bygger på mindre grunnlag:</p>
+                            <ul class='rg-liste'>
+                                {uke.ukedata.feil.map((f) => (
+                                    <li>{f}</li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+                </article>
+            )
+        )
+    }
+</RadgiverLayout>
