@@ -1,0 +1,77 @@
+---
+/** This week's advice turned into shares and kroner for the cash and holdings on record. */
+import RadMerke from './RadMerke.astro';
+import type { Aksje, Kursoppsummering } from '../../lib/radgiver/data';
+import { dato, kroner, kurs } from '../../lib/radgiver/format';
+import type { Fordeling } from '../../lib/radgiver/portefolje';
+
+export interface Props {
+    fordeling: Fordeling;
+    aksjer: Map<string, Aksje>;
+    kurser: Record<string, Kursoppsummering>;
+}
+
+const { fordeling: f, aksjer, kurser } = Astro.props;
+const kursdatoer = [...new Set(f.poster.map((p) => kurser[p.ticker]?.siste_dato).filter(Boolean))].sort() as string[];
+const kjop = f.poster.filter((p) => p.handling === 'kjop');
+---
+
+<section class='rg-kort rg-seksjon fordeling' aria-labelledby='fordeling-tittel'>
+    <h2 id='fordeling-tittel'>Fordeling</h2>
+    <p>
+        {kroner(f.kontanter)} i kontanter{f.tilgjengelig > f.kontanter && <>, {kroner(f.tilgjengelig)} med salgene</>}.
+        {kjop.length > 0 ? ' Slik bør pengene fordeles etter ukens råd:' : ' Ingen kjøp denne uken.'}
+    </p>
+    {
+        f.poster.length > 0 && (
+            <div class='rg-tabell-rull'>
+                <table class='rg-tabell'>
+                    <thead>
+                        <tr>
+                            <th scope='col'>Aksje</th>
+                            <th scope='col'>Handling</th>
+                            <th scope='col' class='tall'>
+                                Antall
+                            </th>
+                            <th scope='col' class='tall rg-bred'>
+                                Kurs
+                            </th>
+                            <th scope='col' class='tall'>
+                                Beløp
+                            </th>
+                            <th scope='col' class='tall rg-bred'>
+                                Kurtasje
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {f.poster.map((p) => (
+                            <tr>
+                                <th scope='row'>
+                                    <a class='link' href={`/radgiver/aksje/${p.ticker}`}>
+                                        {aksjer.get(p.ticker)?.navn ?? p.ticker}
+                                    </a>
+                                </th>
+                                <td>
+                                    <RadMerke rad={p.handling} />
+                                </td>
+                                <td class='tall'>{p.antall}</td>
+                                <td class='tall rg-bred'>{kurs(p.kurs, aksjer.get(p.ticker)?.valuta)}</td>
+                                <td class='tall'>{kroner(p.antall * p.kursNok)}</td>
+                                <td class='tall rg-bred'>{p.kurtasje ? kroner(p.kurtasje) : '–'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )
+    }
+    <p>
+        Kjøp med kurtasje: <strong>{kroner(f.kjopt)}</strong>. Igjen som kontanter: <strong>{kroner(f.igjen)}</strong>.
+    </p>
+    {f.merknader.map((m) => <p class='rg-dempet'>{m}</p>)}
+    <p class='rg-dempet'>
+        {kursdatoer.length > 0 && <>Antallet bygger på sluttkurs {kursdatoer.map(dato).join(', ')}. Sjekk kursen før du handler; har den steget, kan det bli én aksje mindre. </>}
+        <a class='link' href='/radgiver/portefolje#handel'>Registrer handelen</a> når den er gjort.
+    </p>
+</section>

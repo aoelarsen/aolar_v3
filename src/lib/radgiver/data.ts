@@ -3,6 +3,7 @@
  * the Pydantic models in src/aksjeverktoy/modeller.py there.
  */
 import { GithubFeil, hentFil, listMappe } from './github';
+import { KAPITALFIL, tolkKapital, type Kapital } from './portefolje';
 
 export type Rad = 'kjop' | 'hold' | 'selg' | 'ikke_kjop';
 export type Signal = 'positiv' | 'noytral' | 'negativ';
@@ -38,11 +39,19 @@ export interface Borsmelding {
     lenke: string;
 }
 
+export interface Makroserie {
+    navn: string;
+    enhet: string;
+    /** (period, value), oldest first. */
+    punkter: [string, number][];
+}
+
 export interface Ukedata {
     dato: string;
     aksjer: Aksje[];
     kurser: Record<string, Kursoppsummering>;
     meldinger: Record<string, Borsmelding[]>;
+    makroserier?: Makroserie[];
     feil: string[];
 }
 
@@ -154,6 +163,16 @@ export async function hentKurshistorikk(): Promise<Record<string, Kursserie>> {
     const [siste] = datoer(await listMappe('ukedata'), 'kurser-');
     if (!siste) return {};
     return (JSON.parse(await hentFil(`ukedata/kurser-${siste}.json`)) as { kurser: Record<string, Kursserie> }).kurser;
+}
+
+/** The capital register, or null before the stock tool has one. */
+export async function hentKapital(): Promise<Kapital | null> {
+    try {
+        return tolkKapital(await hentFil(KAPITALFIL));
+    } catch (e) {
+        if (e instanceof GithubFeil && e.message.startsWith('Fant ikke')) return null;
+        throw e;
+    }
 }
 
 export async function hentLogg(): Promise<Loggrad[]> {
