@@ -76,12 +76,12 @@ const nokkeltall = k && [
                     <section class='aksje-topp'>
                         <div>
                             <p class='rg-overtittel'>
-                                {aksje.ticker} · {aksje.sektor}
+                                {aksje.ticker} · {aksje.land ?? 'Norge'} · {aksje.sektor}
                                 {aksje.antall > 0 && <> · Eies {aksje.antall} stk</>}
                             </p>
                             <h1>{aksje.navn}</h1>
                             <div class='aksje-kurs'>
-                                <span class='kurs kurs-stor'>{kurs(k?.siste_kurs)}</span>
+                                <span class='kurs kurs-stor'>{kurs(k?.siste_kurs, aksje.valuta)}</span>
                                 <Endring verdi={k?.endring_1_uke_pst} periode='1 uke' />
                                 <Endring verdi={k?.endring_1_mnd_pst} periode='1 mnd' />
                                 <Endring verdi={k?.endring_3_mnd_pst} periode='3 mnd' />

@@ -39,6 +39,7 @@ const nyere = plass > 0 ? alle[plass - 1] : null;
 const eldre = plass >= 0 && plass < alle.length - 1 ? alle[plass + 1] : null;
 
 const navn = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a.navn]));
+const valuta = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a.valuta]));
 const anbefalinger = uke ? sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger) : [];
 const per = <T extends { ticker: string }>(liste: T[] = []) => new Map(liste.map((x) => [x.ticker, x]));
 const nyheter = per(uke?.vurdering.nyheter);
@@ -115,7 +116,7 @@ const signal = (s: Signal | undefined) => s ?? null;
                                                 <td>
                                                     <Sikkerhet verdi={a.sikkerhet} />
                                                 </td>
-                                                <td class='tall'>{kurs(k?.siste_kurs)}</td>
+                                                <td class='tall'>{kurs(k?.siste_kurs, valuta.get(a.ticker))}</td>
                                                 <td class='tall'>
                                                     <Endring verdi={k?.endring_1_uke_pst} />
                                                 </td>
