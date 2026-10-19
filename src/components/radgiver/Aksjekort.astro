@@ -1,0 +1,52 @@
+---
+import Endring from './Endring.astro';
+import Minigraf from './Minigraf.astro';
+import RadMerke from './RadMerke.astro';
+import Sikkerhet from './Sikkerhet.astro';
+import { delRisiko, land, type Aksje, type Anbefaling, type Kursoppsummering, type Kursserie } from '../../lib/radgiver/data';
+import { kurs } from '../../lib/radgiver/format';
+
+export interface Props {
+    anbefaling: Anbefaling;
+    aksje?: Aksje;
+    kurser?: Kursoppsummering;
+    serie?: Kursserie;
+}
+
+const { anbefaling: a, aksje, kurser: k, serie } = Astro.props;
+const { risiko } = delRisiko(a.begrunnelse);
+---
+
+<li class:list={['rg-kort', 'aksjekort', `aksjekort-${a.rad}`]} data-land={land(aksje)}>
+    <div class='aksjekort-topp'>
+        <h3>
+            <a class='aksjekort-lenke' href={`/radgiver/aksje/${a.ticker}`}>
+                {aksje?.navn ?? a.ticker}
+            </a>
+        </h3>
+        <span class='ticker'>{a.ticker}</span>
+    </div>
+    <p class='aksjekort-meta'>
+        <span>{land(aksje)}</span>
+        {aksje?.sektor && <span>{aksje.sektor}</span>}
+        {aksje && aksje.antall > 0 && <span class='eies'>Eies · {aksje.antall} stk</span>}
+    </p>
+    <div class='aksjekort-rad'>
+        <RadMerke rad={a.rad} stor />
+        <Sikkerhet verdi={a.sikkerhet} />
+    </div>
+    <div class='aksjekort-kurs'>
+        <span class='kurs'>{kurs(k?.siste_kurs, aksje?.valuta)}</span>
+        <Endring verdi={k?.endring_1_uke_pst} periode='1 uke' />
+    </div>
+    <div class='aksjekort-graf'>
+        <Minigraf serie={serie} />
+        <Endring verdi={k?.endring_3_mnd_pst} periode='3 mnd' />
+    </div>
+    <div class='aksjekort-bunn'>
+        {risiko ? <span class:list={['risiko', `risiko-${risiko}`]}>Risiko: {risiko}</span> : <span />}
+        <span class='les-mer' aria-hidden='true'>
+            Les begrunnelse →
+        </span>
+    </div>
+</li>

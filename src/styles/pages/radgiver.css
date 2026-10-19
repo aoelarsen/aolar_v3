@@ -569,6 +569,76 @@ body {
 
 /* ---------- Ukens råd ---------- */
 
+/* The cards set display: grid, so the market filter needs this to hide them. */
+.rg-radgruppe[hidden],
+.rg-radgruppe [hidden] {
+    display: none !important;
+}
+
+.rg-radgruppe {
+    margin-block: 1.75rem;
+}
+
+.rg-radgruppe > h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    margin: 0 0 0.85rem;
+}
+
+.rg-antall {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    min-width: 1.6rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    text-align: center;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--rg-dempet);
+}
+
+/* The narrow table keeps name, price and change; the rest is on the stock page. */
+@media (max-width: 600px) {
+    .rg-radgruppe .rg-bred {
+        display: none;
+    }
+}
+
+.rg-landfilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+}
+
+.rg-landfilter button {
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--rg-kant);
+    background: var(--rg-kort);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.rg-landfilter button:hover {
+    border-color: var(--link);
+}
+
+.rg-landfilter button:focus-visible {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
+
+.rg-landfilter button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+}
+
 .rg-telling {
     display: flex;
     flex-wrap: wrap;
@@ -641,7 +711,7 @@ body {
     gap: 0.5rem;
 }
 
-.aksjekort h2 {
+.aksjekort h3 {
     margin: 0;
     font-size: 1.1875rem;
     line-height: 1.25;

@@ -7,8 +7,10 @@ const pstFormat = new Intl.NumberFormat('nb-NO', {
 const langDato = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const kortDato = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
-export function kurs(verdi: number | null | undefined): string {
-    return verdi == null ? '–' : kursFormat.format(verdi);
+/** A price, with its currency when known (older weeks were all NOK and carry none). */
+export function kurs(verdi: number | null | undefined, valuta?: string): string {
+    if (verdi == null) return '–';
+    return valuta ? `${kursFormat.format(verdi)} ${valuta}` : kursFormat.format(verdi);
 }
 
 export function prosent(verdi: number | null | undefined): string {

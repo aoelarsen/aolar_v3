@@ -1,8 +1,8 @@
 ---
 import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import Aksjekort from '../../components/radgiver/Aksjekort.astro';
 import Datafeil from '../../components/radgiver/Datafeil.astro';
 import Endring from '../../components/radgiver/Endring.astro';
-import Minigraf from '../../components/radgiver/Minigraf.astro';
 import RadMerke from '../../components/radgiver/RadMerke.astro';
 import Sikkerhet from '../../components/radgiver/Sikkerhet.astro';
 import {
@@ -10,6 +10,7 @@ import {
     delRisiko,
     hentKurshistorikk,
     hentSisteUke,
+    land,
     sorterAnbefalinger,
     type Rad,
 } from '../../lib/radgiver/data';
@@ -31,6 +32,16 @@ const aksjer = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a]));
 const anbefalinger = uke ? sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger) : [];
 const antall = anbefalinger.reduce<Partial<Record<Rad, number>>>((sum, a) => ({ ...sum, [a.rad]: (sum[a.rad] ?? 0) + 1 }), {});
 const kursdato = uke ? Object.values(uke.ukedata.kurser)[0]?.siste_dato : undefined;
+
+// Buy advice leads, then what the company owns, then the rest as a compact table.
+const kjop = anbefalinger.filter((a) => a.rad === 'kjop');
+const eide = anbefalinger.filter((a) => a.rad === 'hold' || a.rad === 'selg');
+const ikkeKjop = anbefalinger.filter((a) => a.rad === 'ikke_kjop');
+
+const LANDREKKEFOLGE = ['Norge', 'Sverige', 'Danmark', 'Finland'];
+const landene = [...new Set(anbefalinger.map((a) => land(aksjer.get(a.ticker))))].sort(
+    (a, b) => LANDREKKEFOLGE.indexOf(a) - LANDREKKEFOLGE.indexOf(b),
+);
 ---
 
 <RadgiverLayout title='Ukens råd' aktiv='rad'>
@@ -69,54 +80,121 @@ const kursdato = uke ? Object.values(uke.ukedata.kurser)[0]?.siste_dato : undefi
                     )}
                 </section>
 
-                <ul class='rg-kortgrid'>
-                    {anbefalinger.map((a) => {
-                        const aksje = aksjer.get(a.ticker);
-                        const k = uke.ukedata.kurser[a.ticker];
-                        const { risiko } = delRisiko(a.begrunnelse);
-                        return (
-                            <li class:list={['rg-kort', 'aksjekort', `aksjekort-${a.rad}`]}>
-                                <div class='aksjekort-topp'>
-                                    <h2>
-                                        <a class='aksjekort-lenke' href={`/radgiver/aksje/${a.ticker}`}>
-                                            {aksje?.navn ?? a.ticker}
-                                        </a>
-                                    </h2>
-                                    <span class='ticker'>{a.ticker}</span>
-                                </div>
-                                <p class='aksjekort-meta'>
-                                    {aksje?.sektor}
-                                    {aksje && aksje.antall > 0 && <span class='eies'>Eies · {aksje.antall} stk</span>}
-                                </p>
-                                <div class='aksjekort-rad'>
-                                    <RadMerke rad={a.rad} stor />
-                                    <Sikkerhet verdi={a.sikkerhet} />
-                                </div>
-                                <div class='aksjekort-kurs'>
-                                    <span class='kurs'>{kurs(k?.siste_kurs)}</span>
-                                    <Endring verdi={k?.endring_1_uke_pst} periode='1 uke' />
-                                </div>
-                                <div class='aksjekort-graf'>
-                                    <Minigraf serie={historikk[a.ticker]} />
-                                    <Endring verdi={k?.endring_3_mnd_pst} periode='3 mnd' />
-                                </div>
-                                <div class='aksjekort-bunn'>
-                                    {risiko ? (
-                                        <span class:list={['risiko', `risiko-${risiko}`]}>Risiko: {risiko}</span>
-                                    ) : (
-                                        <span />
-                                    )}
-                                    <span class='les-mer' aria-hidden='true'>
-                                        Les begrunnelse →
-                                    </span>
-                                </div>
-                            </li>
-                        );
-                    })}
-                </ul>
+                {landene.length > 1 && (
+                    <div class='rg-landfilter' role='group' aria-label='Vis marked' data-landfilter>
+                        <button type='button' aria-pressed='true' data-land=''>
+                            Alle
+                        </button>
+                        {landene.map((l) => (
+                            <button type='button' aria-pressed='false' data-land={l}>
+                                {l}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <section class='rg-radgruppe' data-radgruppe>
+                    <h2>
+                        Kjøpsråd <span class='rg-antall'>{kjop.length}</span>
+                    </h2>
+                    {kjop.length > 0 ? (
+                        <>
+                            <ul class='rg-kortgrid'>
+                                {kjop.map((a) => (
+                                    <Aksjekort
+                                        anbefaling={a}
+                                        aksje={aksjer.get(a.ticker)}
+                                        kurser={uke.ukedata.kurser[a.ticker]}
+                                        serie={historikk[a.ticker]}
+                                    />
+                                ))}
+                            </ul>
+                            <p class='rg-dempet' hidden data-ingen>
+                                Ingen kjøpsråd i dette markedet denne uken.
+                            </p>
+                        </>
+                    ) : (
+                        <p class='rg-dempet'>Ingen kjøpsråd denne uken.</p>
+                    )}
+                </section>
+
+                {eide.length > 0 && (
+                    <section class='rg-radgruppe' data-radgruppe data-skjul-tom>
+                        <h2>
+                            Det AOLar eier <span class='rg-antall'>{eide.length}</span>
+                        </h2>
+                        <ul class='rg-kortgrid'>
+                            {eide.map((a) => (
+                                <Aksjekort
+                                    anbefaling={a}
+                                    aksje={aksjer.get(a.ticker)}
+                                    kurser={uke.ukedata.kurser[a.ticker]}
+                                    serie={historikk[a.ticker]}
+                                />
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
+                {ikkeKjop.length > 0 && (
+                    <section class='rg-kort rg-seksjon rg-radgruppe' data-radgruppe data-skjul-tom>
+                        <h2>
+                            Ikke kjøp nå <span class='rg-antall'>{ikkeKjop.length}</span>
+                        </h2>
+                        <div class='rg-tabell-rull'>
+                            <table class='rg-tabell'>
+                                <thead>
+                                    <tr>
+                                        <th scope='col'>Aksje</th>
+                                        <th scope='col' class='rg-bred'>Marked</th>
+                                        <th scope='col' class='rg-bred'>Sikkerhet</th>
+                                        <th scope='col' class='tall'>
+                                            Kurs
+                                        </th>
+                                        <th scope='col' class='tall'>
+                                            1 uke
+                                        </th>
+                                        <th scope='col' class='tall rg-bred'>
+                                            3 mnd
+                                        </th>
+                                        <th scope='col' class='rg-bred'>Risiko</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ikkeKjop.map((a) => {
+                                        const aksje = aksjer.get(a.ticker);
+                                        const k = uke.ukedata.kurser[a.ticker];
+                                        const { risiko } = delRisiko(a.begrunnelse);
+                                        return (
+                                            <tr data-land={land(aksje)}>
+                                                <th scope='row'>
+                                                    <a class='link' href={`/radgiver/aksje/${a.ticker}`}>
+                                                        {aksje?.navn ?? a.ticker}
+                                                    </a>
+                                                </th>
+                                                <td class='rg-bred'>{land(aksje)}</td>
+                                                <td class='rg-bred'>
+                                                    <Sikkerhet verdi={a.sikkerhet} />
+                                                </td>
+                                                <td class='tall'>{kurs(k?.siste_kurs, aksje?.valuta)}</td>
+                                                <td class='tall'>
+                                                    <Endring verdi={k?.endring_1_uke_pst} />
+                                                </td>
+                                                <td class='tall rg-bred'>
+                                                    <Endring verdi={k?.endring_3_mnd_pst} />
+                                                </td>
+                                                <td class='rg-bred'>{risiko ?? '–'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
 
                 <p class='rg-fotnote'>
-                    {kursdato && <>Sluttkurser fra {dato(kursdato)}. </>}
+                    {kursdato && <>Sluttkurser fra {dato(kursdato)}, i valutaen til hver børs. </>}
                     <a class='link' href={`/radgiver/rapport/${uke.dato}`}>
                         Les hele ukesrapporten →
                     </a>
@@ -125,3 +203,28 @@ const kursdato = uke ? Object.values(uke.ukedata.kurser)[0]?.siste_dato : undefi
         )
     }
 </RadgiverLayout>
+
+<script>
+    // Market filter: show only one country's stocks. Without JS every stock is shown.
+    const filter = document.querySelector<HTMLElement>('[data-landfilter]');
+    if (filter) {
+        const knapper = [...filter.querySelectorAll<HTMLButtonElement>('button')];
+        const grupper = [...document.querySelectorAll<HTMLElement>('[data-radgruppe]')];
+        const vis = (valgt: string) => {
+            knapper.forEach((k) => k.setAttribute('aria-pressed', String(k.dataset.land === valgt)));
+            for (const gruppe of grupper) {
+                let synlige = 0;
+                for (const el of gruppe.querySelectorAll<HTMLElement>('[data-land]')) {
+                    el.hidden = Boolean(valgt) && el.dataset.land !== valgt;
+                    if (!el.hidden) synlige++;
+                }
+                const teller = gruppe.querySelector('.rg-antall');
+                if (teller) teller.textContent = String(synlige);
+                if (gruppe.hasAttribute('data-skjul-tom')) gruppe.hidden = synlige === 0;
+                const ingen = gruppe.querySelector<HTMLElement>('[data-ingen]');
+                if (ingen) ingen.hidden = synlige > 0;
+            }
+        };
+        knapper.forEach((k) => k.addEventListener('click', () => vis(k.dataset.land ?? '')));
+    }
+</script>

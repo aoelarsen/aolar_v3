@@ -12,6 +12,10 @@ export interface Aksje {
     navn: string;
     sektor: string;
     antall: number;
+    /** Missing in weeks from before the Nordic stocks were added; those are all Oslo. */
+    bors?: 'OL' | 'ST' | 'CO' | 'HE';
+    land?: string;
+    valuta?: string;
 }
 
 export interface Kursoppsummering {
@@ -170,6 +174,11 @@ export async function hentLogg(): Promise<Loggrad[]> {
 
 export const RAD_TEKST: Record<Rad, string> = { kjop: 'Kjøp', hold: 'Hold', selg: 'Selg', ikke_kjop: 'Ikke kjøp' };
 export const SIGNAL_TEKST: Record<Signal, string> = { positiv: 'Positiv', noytral: 'Nøytral', negativ: 'Negativ' };
+
+/** Country for the market filter. Older weeks only had Oslo stocks. */
+export function land(aksje: Aksje | undefined): string {
+    return aksje?.land ?? 'Norge';
+}
 
 /** Buy and hold first, then by confidence, so the actionable advice leads. */
 export function sorterAnbefalinger(anbefalinger: Anbefaling[]): Anbefaling[] {
