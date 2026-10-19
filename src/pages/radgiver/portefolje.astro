@@ -1,0 +1,395 @@
+---
+import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../components/radgiver/Datafeil.astro';
+import { GithubFeil, hentKapital, hentSisteUke } from '../../lib/radgiver/data';
+import { endreFil } from '../../lib/radgiver/github';
+import { dato, kortdato, kroner, kurs, prosent } from '../../lib/radgiver/format';
+import {
+    KAPITALFIL,
+    KILDE_TEKST,
+    beholdning,
+    kontanter,
+    lagOversikt,
+    skrivKapital,
+    tolkKapital,
+    type Handel,
+    type Innskudd,
+    type Kapital,
+} from '../../lib/radgiver/portefolje';
+
+export const prerender = false;
+
+const LAGRET: Record<string, string> = {
+    innskudd: 'Den friske kapitalen er registrert.',
+    handel: 'Handelen er registrert.',
+};
+
+let uke;
+try {
+    uke = await hentSisteUke();
+} catch (feil) {
+    uke = { feil };
+}
+const aksjer = uke && !('feil' in uke) ? uke.ukedata.aksjer : [];
+const navn = new Map(aksjer.map((a) => [a.ticker, a.navn]));
+const idag = new Date().toISOString().slice(0, 10);
+
+/** A change refused once the current file was read, with the reason for the user. */
+class Avvist extends Error {}
+
+interface Endring {
+    hva: 'innskudd' | 'handel';
+    /** Changes the register in place, or returns why it can't. */
+    endre: (k: Kapital) => string | null;
+    melding: string;
+}
+
+/** Checks a submitted form and returns the change to make, or a message for the user. */
+function tolkSkjema(skjema: FormData): Endring | string {
+    const tall = (felt: string) => Number(String(skjema.get(felt) ?? '').replace(/\s/g, '').replace(',', '.'));
+    const datoFelt = String(skjema.get('dato') ?? '') || idag;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datoFelt) || datoFelt > idag) return 'Datoen må være i dag eller tidligere.';
+
+    if (skjema.get('handling') === 'innskudd') {
+        const belop = tall('belop');
+        const kilde = skjema.get('kilde') === 'lan' ? 'lan' : 'egenkapital';
+        const notat = String(skjema.get('notat') ?? '').trim().slice(0, 200);
+        if (!(belop > 0 && belop < 1e9)) return 'Skriv inn et beløp større enn null.';
+        const innskudd: Innskudd = { dato: datoFelt, belop: Math.round(belop * 100) / 100, kilde, notat };
+        return {
+            hva: 'innskudd',
+            endre: (k) => {
+                k.innskudd.push(innskudd);
+                return null;
+            },
+            melding: `Frisk kapital: ${kroner(innskudd.belop)} (${KILDE_TEKST[kilde].toLowerCase()}) fra aolar.no`,
+        };
+    }
+
+    if (skjema.get('handling') === 'handel') {
+        const ticker = String(skjema.get('ticker') ?? '');
+        const type = skjema.get('type') === 'salg' ? 'salg' : 'kjop';
+        const antall = tall('antall');
+        const belop = tall('belop');
+        if (!navn.has(ticker)) return 'Velg en aksje fra listen.';
+        if (!(Number.isInteger(antall) && antall > 0)) return 'Antall må være et helt tall større enn null.';
+        if (!(belop > 0 && belop < 1e9)) return 'Skriv inn beløpet i kroner fra handelen.';
+        const handel: Handel = { dato: datoFelt, ticker, type, antall, belop: Math.round(belop * 100) / 100 };
+        return {
+            hva: 'handel',
+            // Checked against the file as it is when written, not as it was when the page loaded.
+            endre: (k) => {
+                if (type === 'salg' && (beholdning(k)[ticker] ?? 0) < antall) {
+                    return `Du eier ${beholdning(k)[ticker] ?? 0} ${navn.get(ticker)}-aksjer, så du kan ikke selge ${antall}.`;
+                }
+                if (type === 'kjop' && belop > kontanter(k) + 0.005) {
+                    return `Kjøpet er større enn kontantene (${kroner(kontanter(k))}). Registrer frisk kapital først.`;
+                }
+                k.handler.push(handel);
+                return null;
+            },
+            melding: `${type === 'kjop' ? 'Kjøp' : 'Salg'}: ${antall} ${ticker} for ${kroner(handel.belop)} fra aolar.no`,
+        };
+    }
+    return 'Ukjent skjema.';
+}
+
+let feilmelding: string | null = null;
+if (Astro.request.method === 'POST') {
+    const tolket = tolkSkjema(await Astro.request.formData());
+    if (typeof tolket === 'string') {
+        feilmelding = tolket;
+    } else {
+        try {
+            await endreFil(
+                KAPITALFIL,
+                (tekst) => {
+                    const k = tolkKapital(tekst);
+                    const avvist = tolket.endre(k);
+                    if (avvist) throw new Avvist(avvist);
+                    return skrivKapital(k);
+                },
+                tolket.melding,
+            );
+            return Astro.redirect(`/radgiver/portefolje?lagret=${tolket.hva}`, 303);
+        } catch (e) {
+            if (e instanceof Avvist) {
+                feilmelding = e.message;
+            } else {
+                console.error('Portefølje: klarte ikke å lagre:', e);
+                feilmelding =
+                    e instanceof GithubFeil && e.message.includes('skrivetilgang')
+                        ? 'Fikk ikke lagret: tokenet nettsiden bruker mot aksjeverktøyet kan bare lese. Det trenger skrivetilgang til innholdet i repoet.'
+                        : 'Fikk ikke lagret. Prøv igjen om litt.';
+            }
+        }
+    }
+}
+const lagret = feilmelding ? null : LAGRET[Astro.url.searchParams.get('lagret') ?? ''];
+
+let kapital: Kapital | null = null;
+let lesefeil: unknown = null;
+try {
+    kapital = await hentKapital();
+} catch (e) {
+    lesefeil = e;
+}
+const ukedata = uke && !('feil' in uke) ? uke.ukedata : null;
+const oversikt = kapital && ukedata ? lagOversikt(kapital, ukedata) : null;
+const valuta = new Map(aksjer.map((a) => [a.ticker, a.valuta]));
+const historikk = kapital
+    ? [
+          ...kapital.innskudd.map((i) => ({
+              dato: i.dato,
+              tekst: `Frisk kapital (${KILDE_TEKST[i.kilde].toLowerCase()})${i.notat ? `: ${i.notat}` : ''}`,
+              belop: i.belop,
+          })),
+          ...kapital.handler.map((h) => ({
+              dato: h.dato,
+              tekst: `${h.type === 'kjop' ? 'Kjøp' : 'Salg'} ${h.antall} ${navn.get(h.ticker) ?? h.ticker}`,
+              belop: h.type === 'kjop' ? -h.belop : h.belop,
+          })),
+      ].sort((a, b) => b.dato.localeCompare(a.dato))
+    : [];
+---
+
+<RadgiverLayout title='Portefølje' aktiv='portefolje'>
+    {
+        uke && 'feil' in uke ? (
+            <Datafeil feil={uke.feil} />
+        ) : lesefeil ? (
+            <Datafeil feil={lesefeil} />
+        ) : !kapital ? (
+            <div class='rg-kort rg-tom'>
+                <h1>Ingen kapitalregister ennå</h1>
+                <p>
+                    Porteføljen leses fra <code>{KAPITALFIL}</code> i aksjeverktøyet. Den filen finnes ikke på main
+                    ennå.
+                </p>
+            </div>
+        ) : (
+            <>
+                <section class='rg-ingress'>
+                    <p class='rg-overtittel'>AOLar Holding</p>
+                    <h1>Portefølje</h1>
+                    {lagret && (
+                        <p class='rg-melding rg-melding-ok' role='status'>
+                            {lagret} Fordelingen under Ukens råd er oppdatert.
+                        </p>
+                    )}
+                    {feilmelding && (
+                        <p class='rg-melding rg-melding-feil' role='alert'>
+                            {feilmelding}
+                        </p>
+                    )}
+                </section>
+
+                {oversikt && (
+                    <dl class='nokkeltall'>
+                        <div>
+                            <dt>Verdi nå</dt>
+                            <dd>{kroner(oversikt.total)}</dd>
+                        </div>
+                        <div>
+                            <dt>Kontanter</dt>
+                            <dd>{kroner(oversikt.kontanter)}</dd>
+                        </div>
+                        <div>
+                            <dt>Aksjer</dt>
+                            <dd>{kroner(oversikt.aksjeverdi)}</dd>
+                        </div>
+                        <div>
+                            <dt>Skutt inn</dt>
+                            <dd>
+                                {kroner(oversikt.innskutt)}
+                                {oversikt.lan > 0 && (
+                                    <span class='nokkeltall-under'>
+                                        {kroner(oversikt.egenkapital)} egenkapital, {kroner(oversikt.lan)} lån
+                                    </span>
+                                )}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Resultat</dt>
+                            <dd>
+                                {kroner(oversikt.resultat)}
+                                {oversikt.innskutt > 0 && (
+                                    <span class='nokkeltall-under'>
+                                        {prosent((oversikt.resultat / oversikt.innskutt) * 100)}
+                                    </span>
+                                )}
+                            </dd>
+                        </div>
+                    </dl>
+                )}
+
+                {oversikt && oversikt.linjer.length > 0 && (
+                    <section class='rg-kort rg-seksjon'>
+                        <h2>Beholdning</h2>
+                        <div class='rg-tabell-rull'>
+                            <table class='rg-tabell'>
+                                <thead>
+                                    <tr>
+                                        <th scope='col'>Aksje</th>
+                                        <th scope='col' class='tall'>
+                                            Antall
+                                        </th>
+                                        <th scope='col' class='tall'>
+                                            Kurs
+                                        </th>
+                                        <th scope='col' class='tall'>
+                                            Verdi
+                                        </th>
+                                        <th scope='col' class='tall'>
+                                            Andel
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {oversikt.linjer.map((l) => (
+                                        <tr>
+                                            <th scope='row'>
+                                                <a class='link' href={`/radgiver/aksje/${l.ticker}`}>
+                                                    {navn.get(l.ticker) ?? l.ticker}
+                                                </a>
+                                            </th>
+                                            <td class='tall'>{l.antall}</td>
+                                            <td class='tall'>{kurs(l.kurs, valuta.get(l.ticker))}</td>
+                                            <td class='tall'>{l.verdiNok == null ? '–' : kroner(l.verdiNok)}</td>
+                                            <td class='tall'>
+                                                {l.verdiNok == null || !oversikt.total
+                                                    ? '–'
+                                                    : `${Math.round((l.verdiNok / oversikt.total) * 100)} %`}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {ukedata && (
+                            <p class='rg-dempet'>
+                                Verdien bygger på sluttkursene i ukedataene fra {dato(ukedata.dato)}, regnet om til
+                                kroner.
+                            </p>
+                        )}
+                    </section>
+                )}
+
+                <div class='rg-skjemaer'>
+                    <form class='rg-kort rg-seksjon rg-skjema' method='post' id='kapital'>
+                        <h2>Frisk kapital</h2>
+                        <p class='rg-dempet'>Penger du skyter inn i holdingselskapet, eller låner, til nye kjøp.</p>
+                        <input type='hidden' name='handling' value='innskudd' />
+                        <div class='rg-feltrad'>
+                            <label class='rg-felt'>
+                                Beløp (kr)
+                                <input type='text' name='belop' inputmode='decimal' required autocomplete='off' />
+                            </label>
+                            <label class='rg-felt'>
+                                Dato
+                                <input type='date' name='dato' value={idag} max={idag} required />
+                            </label>
+                        </div>
+                        <fieldset class='rg-valg'>
+                            <legend>Hvor kommer pengene fra?</legend>
+                            <label>
+                                <input type='radio' name='kilde' value='egenkapital' checked /> Egenkapital
+                            </label>
+                            <label>
+                                <input type='radio' name='kilde' value='lan' /> Privat lån
+                            </label>
+                        </fieldset>
+                        <label class='rg-felt'>
+                            Notat (valgfritt)
+                            <input type='text' name='notat' maxlength='200' autocomplete='off' />
+                        </label>
+                        <button type='submit' class='rg-knapp'>
+                            Legg til kapital
+                        </button>
+                    </form>
+
+                    <form class='rg-kort rg-seksjon rg-skjema' method='post' id='handel'>
+                        <h2>Registrer handel</h2>
+                        <p class='rg-dempet'>
+                            Når du har kjøpt eller solgt. Beløpet er det som gikk ut av eller inn på kontoen, med
+                            kurtasje.
+                        </p>
+                        <input type='hidden' name='handling' value='handel' />
+                        <fieldset class='rg-valg'>
+                            <legend>Type</legend>
+                            <label>
+                                <input type='radio' name='type' value='kjop' checked /> Kjøp
+                            </label>
+                            <label>
+                                <input type='radio' name='type' value='salg' /> Salg
+                            </label>
+                        </fieldset>
+                        <label class='rg-felt'>
+                            Aksje
+                            <select name='ticker' required>
+                                <option value=''>Velg aksje</option>
+                                {aksjer.map((a) => (
+                                    <option value={a.ticker}>
+                                        {a.navn} ({a.ticker})
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <div class='rg-feltrad'>
+                            <label class='rg-felt'>
+                                Antall
+                                <input type='number' name='antall' min='1' step='1' required />
+                            </label>
+                            <label class='rg-felt'>
+                                Beløp (kr)
+                                <input type='text' name='belop' inputmode='decimal' required autocomplete='off' />
+                            </label>
+                            <label class='rg-felt'>
+                                Dato
+                                <input type='date' name='dato' value={idag} max={idag} required />
+                            </label>
+                        </div>
+                        <button type='submit' class='rg-knapp'>
+                            Registrer
+                        </button>
+                    </form>
+                </div>
+
+                {historikk.length > 0 && (
+                    <section class='rg-kort rg-seksjon'>
+                        <h2>Historikk</h2>
+                        <div class='rg-tabell-rull'>
+                            <table class='rg-tabell'>
+                                <thead>
+                                    <tr>
+                                        <th scope='col'>Dato</th>
+                                        <th scope='col'>Hva</th>
+                                        <th scope='col' class='tall'>
+                                            Kontanter
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historikk.map((h) => (
+                                        <tr>
+                                            <td class='tall'>{kortdato(h.dato)}</td>
+                                            <td>{h.tekst}</td>
+                                            <td class='tall'>
+                                                {h.belop > 0 ? '+' : ''}
+                                                {kroner(h.belop)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class='rg-dempet'>
+                            Registeret ligger i <code>{KAPITALFIL}</code> i aksjeverktøyet. Har noe blitt feil, si fra i
+                            prosjektet, så retter Claude det.
+                        </p>
+                    </section>
+                )}
+            </>
+        )
+    }
+</RadgiverLayout>

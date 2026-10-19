@@ -4,6 +4,7 @@ const pstFormat = new Intl.NumberFormat('nb-NO', {
     maximumFractionDigits: 1,
     signDisplay: 'exceptZero',
 });
+const kronerFormat = new Intl.NumberFormat('nb-NO', { maximumFractionDigits: 0 });
 const langDato = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const kortDato = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
@@ -11,6 +12,11 @@ const kortDato = new Intl.DateTimeFormat('nb-NO', { day: 'numeric', month: 'shor
 export function kurs(verdi: number | null | undefined, valuta?: string): string {
     if (verdi == null) return '–';
     return valuta ? `${kursFormat.format(verdi)} ${valuta}` : kursFormat.format(verdi);
+}
+
+/** Whole kroner, for amounts in the portfolio. */
+export function kroner(verdi: number): string {
+    return `${kronerFormat.format(verdi)} kr`;
 }
 
 export function prosent(verdi: number | null | undefined): string {

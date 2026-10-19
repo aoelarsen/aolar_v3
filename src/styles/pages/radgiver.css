@@ -600,7 +600,8 @@ body {
 
 /* The narrow table keeps name, price and change; the rest is on the stock page. */
 @media (max-width: 600px) {
-    .rg-radgruppe .rg-bred {
+    .rg-radgruppe .rg-bred,
+    .fordeling .rg-bred {
         display: none;
     }
 }
@@ -1384,4 +1385,106 @@ body {
 .utfall-venter {
     color: var(--rg-dempet);
     font-weight: 400;
+}
+
+/* ---------- Portfolio ---------- */
+
+.portefolje-kort {
+    margin-top: 0;
+}
+
+.portefolje-lenke {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+.nokkeltall > .portefolje-lenke {
+    background: transparent;
+    border-style: dashed;
+}
+
+.fordeling .rg-tabell-rull {
+    margin-block: 0.75rem;
+}
+
+.rg-skjemaer {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    margin-block: 1rem;
+}
+
+.rg-skjemaer .rg-seksjon {
+    margin: 0;
+}
+
+.rg-skjema {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.rg-skjema .rg-knapp {
+    margin-top: 0.75rem;
+    justify-self: start;
+}
+
+.rg-felt select,
+.rg-felt textarea {
+    font: inherit;
+    font-weight: 400;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--field-border);
+    background: var(--surface);
+    color: var(--ink);
+}
+
+.rg-feltrad > .rg-felt {
+    min-width: 0;
+}
+
+.rg-skjema .rg-felt input,
+.rg-skjema .rg-felt select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.nokkeltall dd > .nokkeltall-under {
+    display: block;
+    margin-top: 0.15rem;
+}
+
+.rg-feltrad {
+    display: grid;
+    gap: 0 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+}
+
+.rg-valg {
+    border: 0;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+}
+
+.rg-valg legend {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-bottom: 0.35rem;
+    padding: 0;
+}
+
+.rg-valg label {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.rg-melding-ok {
+    border-color: var(--link);
+    background: color-mix(in srgb, var(--link) 10%, transparent);
 }

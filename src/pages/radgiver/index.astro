@@ -3,25 +3,28 @@ import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
 import Aksjekort from '../../components/radgiver/Aksjekort.astro';
 import Datafeil from '../../components/radgiver/Datafeil.astro';
 import Endring from '../../components/radgiver/Endring.astro';
+import Fordeling from '../../components/radgiver/Fordeling.astro';
 import RadMerke from '../../components/radgiver/RadMerke.astro';
 import Sikkerhet from '../../components/radgiver/Sikkerhet.astro';
 import {
     RAD_TEKST,
     delRisiko,
+    hentKapital,
     hentKurshistorikk,
     hentSisteUke,
     land,
     sorterAnbefalinger,
     type Rad,
 } from '../../lib/radgiver/data';
-import { dato, kurs, ukenummer } from '../../lib/radgiver/format';
+import { dato, kroner, kurs, ukenummer } from '../../lib/radgiver/format';
+import { lagFordeling, lagOversikt } from '../../lib/radgiver/portefolje';
 
 export const prerender = false;
 
 let innhold;
 try {
-    const [uke, historikk] = await Promise.all([hentSisteUke(), hentKurshistorikk()]);
-    innhold = { uke, historikk };
+    const [uke, historikk, kapital] = await Promise.all([hentSisteUke(), hentKurshistorikk(), hentKapital()]);
+    innhold = { uke, historikk, kapital };
 } catch (feil) {
     innhold = { feil };
 }
@@ -32,6 +35,11 @@ const aksjer = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a]));
 const anbefalinger = uke ? sorterAnbefalinger(uke.vurdering.portefolje.anbefalinger) : [];
 const antall = anbefalinger.reduce<Partial<Record<Rad, number>>>((sum, a) => ({ ...sum, [a.rad]: (sum[a.rad] ?? 0) + 1 }), {});
 const kursdato = uke ? Object.values(uke.ukedata.kurser)[0]?.siste_dato : undefined;
+
+// Cash and holdings come from the capital register, so trades made since the advice count.
+const kapital = 'kapital' in innhold ? innhold.kapital : null;
+const fordeling = uke && kapital ? lagFordeling(kapital, uke.vurdering.portefolje.anbefalinger, uke.ukedata) : null;
+const oversikt = uke && kapital ? lagOversikt(kapital, uke.ukedata) : null;
 
 // Buy advice leads, then what the company owns, then the rest as a compact table.
 const kjop = anbefalinger.filter((a) => a.rad === 'kjop');
@@ -79,6 +87,30 @@ const landene = [...new Set(anbefalinger.map((a) => land(aksjer.get(a.ticker))))
                         </p>
                     )}
                 </section>
+
+                {oversikt && (
+                    <dl class='nokkeltall portefolje-kort'>
+                        <div>
+                            <dt>Porteføljen</dt>
+                            <dd>{kroner(oversikt.total)}</dd>
+                        </div>
+                        <div>
+                            <dt>Kontanter</dt>
+                            <dd>{kroner(oversikt.kontanter)}</dd>
+                        </div>
+                        <div>
+                            <dt>Aksjer</dt>
+                            <dd>{kroner(oversikt.aksjeverdi)}</dd>
+                        </div>
+                        <div class='portefolje-lenke'>
+                            <a class='link' href='/radgiver/portefolje'>
+                                Portefølje og frisk kapital →
+                            </a>
+                        </div>
+                    </dl>
+                )}
+
+                {fordeling && <Fordeling fordeling={fordeling} aksjer={aksjer} kurser={uke.ukedata.kurser} />}
 
                 {landene.length > 1 && (
                     <div class='rg-landfilter' role='group' aria-label='Vis marked' data-landfilter>
