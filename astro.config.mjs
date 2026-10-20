@@ -22,6 +22,8 @@ export default defineConfig({
             VITE_SUPABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
             VITE_SUPABASE_PUBLISHABLE_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
             GITHUB_TOKEN_VERKTOY: envField.string({ context: 'server', access: 'secret', optional: true }),
+            // Comma-separated e-mail addresses allowed into /radgiver. Unset means nobody.
+            RADGIVER_EPOST: envField.string({ context: 'server', access: 'secret', optional: true }),
         },
     },
 });

@@ -1,5 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
-import { lagSupabase } from './lib/radgiver/supabase';
+import { innloggetEpost, lagSupabase } from './lib/radgiver/supabase';
 
 const BESKYTTET = '/radgiver';
 /** Under /radgiver, but reachable without a session. */
@@ -11,10 +11,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!iRadgiver || context.isPrerendered) return next();
 
     if (!APNE.some((p) => pathname.startsWith(p))) {
-        // getClaims verifies the JWT signature, unlike getSession which trusts the cookie as-is.
-        const { data } = await lagSupabase(context.request, context.cookies).auth.getClaims();
-        if (!data?.claims) return context.redirect('/radgiver/logg-inn', 303);
-        context.locals.epost = typeof data.claims.email === 'string' ? data.claims.email : '';
+        // getClaims (inside innloggetEpost) verifies the JWT signature, unlike getSession.
+        const epost = await innloggetEpost(lagSupabase(context.request, context.cookies));
+        if (!epost) return context.redirect('/radgiver/logg-inn', 303);
+        context.locals.epost = epost;
     }
 
     const response = await next();
