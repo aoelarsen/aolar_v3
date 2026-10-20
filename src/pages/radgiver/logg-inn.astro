@@ -43,10 +43,6 @@ if (Astro.request.method === 'POST') {
                         Har <strong>{epost}</strong> tilgang, får du en e-post med en innloggingslenke om litt. Lenken
                         virker én gang og går ut etter en time.
                     </p>
-                    <p>
-                        <strong>Åpne lenken i denne nettleseren, på denne enheten.</strong> Åpnes den et annet sted, for
-                        eksempel i e-postappens egen nettleser, virker den ikke.
-                    </p>
                     <p class='rg-dempet'>
                         Ingen e-post? Se i søppelposten, eller <a class='link' href='/radgiver/logg-inn'>prøv igjen</a>.
                     </p>
@@ -63,8 +59,7 @@ if (Astro.request.method === 'POST') {
                     )}
                     {status === 'utlopt' && (
                         <p class='rg-melding rg-melding-feil' role='alert'>
-                            Lenken virket ikke. Den kan være brukt, utløpt eller åpnet i en annen nettleser enn den du
-                            ba om den i. Be om en ny her, i nettleseren du vil bruke.
+                            Lenken er brukt eller utløpt. Be om en ny under.
                         </p>
                     )}
                     <label class='rg-felt'>
