@@ -1,0 +1,26 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getUi, links } from '../../i18n/ui';
+import '../../styles/pages/about.css';
+
+const t = getUi(Astro.currentLocale);
+const about = t.pages.about;
+---
+
+<Layout title={about.title} path='about'>
+    <main class='page about-page' id='main-content'>
+        <h2 class='page-title'>{about.title}</h2>
+        <p class='lead'>{about.lead}</p>
+        <p class='body-text' set:html={about.bodyHtml} />
+        <section class='info-block'>
+            <h3>{about.siteIsHeading}</h3>
+            <p set:html={about.createdWithHtml} />
+            <div class='deploy-status'>
+                <p set:html={about.hostedWithHtml} />
+                <a href={links.netlifyDeploys} class='deploy-status-link'></a>
+                &rarr; <img class='deploy-badge' alt={about.netlifyBadgeAlt} src={links.netlifyBadge} />
+            </div>
+            <p set:html={about.helpFromHtml} />
+        </section>
+    </main>
+</Layout>

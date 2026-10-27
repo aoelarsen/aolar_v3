@@ -9,12 +9,13 @@ export interface Props {
 }
 
 const { path = '' } = Astro.props;
-const locale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
+const locale = Astro.currentLocale === 'en' ? 'en' : 'nb';
 const t = getUi(locale);
 
 const links = [
     { path: '', label: t.nav.home },
     { path: 'about', label: t.nav.about },
+    { path: 'projects', label: t.nav.projects },
     { path: 'contact', label: t.nav.contact },
 ].map((link) => ({
     ...link,

@@ -73,27 +73,3 @@
 .deploy-badge {
     align-self: center;
 }
-
-.github-link {
-    padding: 1.5rem 0;
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    text-decoration: none;
-    color: inherit;
-}
-
-.github-icon {
-    fill: var(--ink);
-}
-
-.fine-print {
-    margin-top: 1rem;
-    font-size: 0.75rem;
-}
-
-@media (min-width: 768px) {
-    .fine-print {
-        font-size: 0.875rem;
-    }
-}

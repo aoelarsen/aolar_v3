@@ -11,7 +11,7 @@ export interface Props {
 }
 
 const { path = '' } = Astro.props;
-const locale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
+const locale = Astro.currentLocale === 'en' ? 'en' : 'nb';
 const homeHref = getRelativeLocaleUrl(locale, '');
 ---
 

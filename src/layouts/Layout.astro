@@ -12,7 +12,7 @@ export interface Props {
 }
 
 const { title, path = '' } = Astro.props;
-const locale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
+const locale = Astro.currentLocale === 'en' ? 'en' : 'nb';
 const t = getUi(locale);
 ---
 
@@ -34,7 +34,39 @@ const t = getUi(locale);
                 <link rel='alternate' hreflang={l} href={new URL(getRelativeLocaleUrl(l, path), Astro.site)} />
             ))
         }
-        <link rel='alternate' hreflang='x-default' href={new URL(getRelativeLocaleUrl('en', path), Astro.site)} />
+        <link rel='alternate' hreflang='x-default' href={new URL(getRelativeLocaleUrl('nb', path), Astro.site)} />
+        {
+            locale === 'nb' && (
+                <script is:inline define:vars={{ enHref: getRelativeLocaleUrl('en', path) }}>
+                    // Norwegian is the default. Switch to English only when the visitor
+                    // picked it with LanguageSwitcher, or when their browser lists English
+                    // before any Norwegian variant. Crawlers stay put so both versions get indexed.
+                    (function () {
+                        var choice = null;
+                        try {
+                            choice = localStorage.getItem('aolar-lang');
+                        } catch (e) {}
+                        var wantsEnglish = false;
+                        if (choice === 'en' || choice === 'nb') {
+                            wantsEnglish = choice === 'en';
+                        } else {
+                            var langs = navigator.languages || [navigator.language];
+                            for (var i = 0; i < langs.length; i++) {
+                                var lang = String(langs[i]).toLowerCase();
+                                if (/^(nb|nn|no)(-|$)/.test(lang)) break;
+                                if (/^en(-|$)/.test(lang)) {
+                                    wantsEnglish = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (wantsEnglish && !/bot|crawl|spider/i.test(navigator.userAgent)) {
+                            location.replace(enHref + location.search + location.hash);
+                        }
+                    })();
+                </script>
+            )
+        }
         <script is:inline>
             (function () {
                 var theme = localStorage.getItem('aolar-theme');

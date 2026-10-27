@@ -8,12 +8,20 @@ export default defineConfig({
     // so the reports never end up as public files in dist/.
     // No edge functions here, so skip the Deno emulator that `astro dev` would otherwise start.
     adapter: netlify({ devFeatures: { edgeFunctions: false } }),
+    // Norwegian at the root, English under /en/. Visitors whose browser prefers
+    // English are sent there by the inline script in Layout.astro.
     i18n: {
-        defaultLocale: 'en',
-        locales: ['en', 'nb'],
+        defaultLocale: 'nb',
+        locales: ['nb', 'en'],
         routing: {
             prefixDefaultLocale: false,
         },
+    },
+    // Norwegian used to live under /nb/; keep old links and search results working.
+    redirects: {
+        '/nb': '/',
+        '/nb/about': '/about',
+        '/nb/contact': '/contact',
     },
     env: {
         // Set in the Netlify project. Read at request time, never sent to the browser.

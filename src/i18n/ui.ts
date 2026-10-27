@@ -1,7 +1,7 @@
-export const locales = ['en', 'nb'] as const;
+export const locales = ['nb', 'en'] as const;
 export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = 'en';
+export const defaultLocale: Locale = 'nb';
 
 /** Single source of truth for external URLs referenced from page content below. */
 export const links = {
@@ -31,11 +31,15 @@ interface AboutContent {
     hostedWithHtml: string;
     netlifyBadgeAlt: string;
     helpFromHtml: string;
-    workHeading: string;
-    workshopText: string;
+}
+
+interface ProjectsContent {
+    title: string;
+    heading: string;
+    lead: string;
+    visitLabel: string;
     githubIntro: string;
     githubHandle: string;
-    finePrint: string;
 }
 
 interface ContactContent {
@@ -64,6 +68,7 @@ interface Ui {
     nav: {
         home: string;
         about: string;
+        projects: string;
         contact: string;
     };
     openMenu: string;
@@ -76,6 +81,7 @@ interface Ui {
     pages: {
         home: HomeContent;
         about: AboutContent;
+        projects: ProjectsContent;
         contact: ContactContent;
     };
 }
@@ -86,6 +92,7 @@ export const ui: Record<Locale, Ui> = {
         nav: {
             home: 'Home',
             about: 'About',
+            projects: 'Projects',
             contact: 'Contact',
         },
         openMenu: 'Open main menu',
@@ -113,11 +120,14 @@ export const ui: Record<Locale, Ui> = {
                 hostedWithHtml: `- hosted with <a class="link" href="${links.netlify}">Netlify</a>`,
                 netlifyBadgeAlt: 'netlify status badge',
                 helpFromHtml: `- now also with help from <a class="link" href="${links.claudeCode}">Claude Code</a>`,
-                workHeading: 'Things I work on:',
-                workshopText: 'Can be found in the workshop at Sport1 Røyken',
-                githubIntro: '… or on github:',
+            },
+            projects: {
+                title: 'Projects - AOLar.no',
+                heading: 'Projects',
+                lead: "Websites I've helped build, built myself and maintain.",
+                visitLabel: 'Visit',
+                githubIntro: 'More code on GitHub:',
                 githubHandle: 'aoelarsen',
-                finePrint: '[… more will be inserted here as soon as I have the time to update]',
             },
             contact: {
                 title: 'Contact AOLar.no',
@@ -141,6 +151,7 @@ export const ui: Record<Locale, Ui> = {
         nav: {
             home: 'Hjem',
             about: 'Om',
+            projects: 'Prosjekter',
             contact: 'Kontakt',
         },
         openMenu: 'Åpne hovedmeny',
@@ -168,11 +179,14 @@ export const ui: Record<Locale, Ui> = {
                 hostedWithHtml: `- hostet med <a class="link" href="${links.netlify}">Netlify</a>`,
                 netlifyBadgeAlt: 'Netlify-statusmerke',
                 helpFromHtml: `- nå også med hjelp fra <a class="link" href="${links.claudeCode}">Claude Code</a>`,
-                workHeading: 'Ting jeg jobber med:',
-                workshopText: 'Du finner meg på verkstedet hos Sport1 Røyken',
-                githubIntro: '… eller på GitHub:',
+            },
+            projects: {
+                title: 'Prosjekter - AOLar.no',
+                heading: 'Prosjekter',
+                lead: 'Nettsidene jeg har vært med å lage, laget selv og vedlikeholder.',
+                visitLabel: 'Besøk',
+                githubIntro: 'Mer kode finner du på GitHub:',
                 githubHandle: 'aoelarsen',
-                finePrint: '[… mer kommer her så snart jeg får tid til å oppdatere]',
             },
             contact: {
                 title: 'Kontakt AOLar.no',
@@ -194,5 +208,5 @@ export const ui: Record<Locale, Ui> = {
 };
 
 export function getUi(locale: string | undefined) {
-    return ui[locale === 'nb' ? 'nb' : 'en'];
+    return ui[locale === 'en' ? 'en' : 'nb'];
 }

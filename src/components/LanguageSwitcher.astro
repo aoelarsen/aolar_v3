@@ -8,13 +8,19 @@ export interface Props {
 }
 
 const { path = '' } = Astro.props;
-const currentLocale = Astro.currentLocale === 'nb' ? 'nb' : 'en';
-const otherLocale = currentLocale === 'en' ? 'nb' : 'en';
+const currentLocale = Astro.currentLocale === 'en' ? 'en' : 'nb';
+const otherLocale = currentLocale === 'nb' ? 'en' : 'nb';
 const t = getUi(currentLocale);
 const otherHref = getRelativeLocaleUrl(otherLocale, path);
 ---
 
-<a href={otherHref} class='language-switch' hreflang={otherLocale} title={t.switchLanguageHint}>
+<a
+    href={otherHref}
+    class='language-switch'
+    hreflang={otherLocale}
+    title={t.switchLanguageHint}
+    data-lang={otherLocale}
+>
     {
         otherLocale === 'nb' ? (
             <svg class='flag-icon' width='22' height='16' viewBox='0 0 22 16' aria-hidden='true'>
@@ -62,3 +68,14 @@ const otherHref = getRelativeLocaleUrl(otherLocale, path);
         border-radius: 0.125rem;
     }
 </style>
+
+<script>
+    // Read by the redirect in Layout.astro, so an explicit choice beats the browser's language.
+    document.querySelectorAll<HTMLAnchorElement>('.language-switch').forEach((link) => {
+        link.addEventListener('click', () => {
+            try {
+                localStorage.setItem('aolar-lang', link.dataset.lang ?? '');
+            } catch {}
+        });
+    });
+</script>

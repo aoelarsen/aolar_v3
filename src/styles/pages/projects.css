@@ -1,0 +1,154 @@
+.page {
+    display: grid;
+    gap: 1rem;
+    padding: 0.5rem 1rem 1.5rem;
+    max-width: 64rem;
+    margin-inline: auto;
+}
+
+.page-title {
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem 0 0;
+    margin: 0;
+}
+
+@media (min-width: 768px) {
+    .page-title {
+        text-align: left;
+        font-size: 2.25rem;
+    }
+}
+
+.lead {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.project-grid {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .project-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* The whole card is clickable through .project-link's ::after, so it stays one link for screen readers. */
+.project-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--field-border);
+    border-radius: 0.25rem;
+    overflow: hidden;
+    transition:
+        border-color 0.2s ease-in-out,
+        transform 0.2s ease-in-out;
+}
+
+.project-card:hover,
+.project-card:focus-within {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+}
+
+.project-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top;
+    border-bottom: 1px solid var(--field-border);
+}
+
+.project-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem 1.25rem;
+    flex-grow: 1;
+}
+
+.project-name {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.project-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.project-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.project-link:focus-visible {
+    outline: none;
+}
+
+.project-card:has(.project-link:focus-visible) {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
+
+.project-description {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.project-visit {
+    margin-top: auto;
+    padding-top: 0.25rem;
+    color: var(--link);
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.project-card:hover .project-visit {
+    text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .project-card {
+        transition: none;
+    }
+
+    .project-card:hover,
+    .project-card:focus-within {
+        transform: none;
+    }
+}
+
+.github-block {
+    padding-top: 1.5rem;
+    text-align: center;
+}
+
+.github-block p {
+    margin: 0;
+}
+
+.github-link {
+    padding: 1rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.github-icon {
+    fill: var(--ink);
+}
