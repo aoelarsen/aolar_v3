@@ -1387,6 +1387,109 @@ body {
     font-weight: 400;
 }
 
+/* ---------- Advice history ---------- */
+
+.rg-landfilter a {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--rg-kant);
+    background: var(--rg-kort);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.rg-landfilter a:hover {
+    border-color: var(--link);
+}
+
+.rg-landfilter a:focus-visible {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
+
+.rg-landfilter a[aria-current] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+}
+
+.historikk-topp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.historikk-topp h2 {
+    margin: 0;
+}
+
+.historikk-topp .rg-ghost-button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--surface);
+}
+
+.historikk tbody tr[hidden] {
+    display: none;
+}
+
+.historikk td {
+    vertical-align: top;
+}
+
+/* Keeps the stock name in view while the rounds scroll sideways on a phone. */
+.historikk tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--rg-kort);
+}
+
+@media (max-width: 600px) {
+    .historikk tbody th {
+        white-space: normal;
+        min-width: 6.5rem;
+    }
+}
+
+.historikk-celle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+
+.historikk-utfall {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+}
+
+.utvikling {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.utvikling-opp {
+    color: var(--success);
+}
+
+.utvikling-ned {
+    color: var(--danger);
+}
+
+.utvikling-stabil {
+    color: var(--rg-dempet);
+    font-weight: 400;
+}
+
 /* ---------- Portfolio ---------- */
 
 .portefolje-kort {

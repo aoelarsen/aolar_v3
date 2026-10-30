@@ -200,7 +200,7 @@ export function land(aksje: Aksje | undefined): string {
 }
 
 /** Buy and hold first, then by confidence, so the actionable advice leads. */
-export function sorterAnbefalinger(anbefalinger: Anbefaling[]): Anbefaling[] {
+export function sorterAnbefalinger<T extends { rad: Rad; sikkerhet: number }>(anbefalinger: T[]): T[] {
     const rekkefolge: Record<Rad, number> = { kjop: 0, selg: 1, hold: 2, ikke_kjop: 3 };
     return [...anbefalinger].sort((a, b) => rekkefolge[a.rad] - rekkefolge[b.rad] || b.sikkerhet - a.sikkerhet);
 }
@@ -244,7 +244,71 @@ export function utfall(logg: Loggrad[], kurser: Record<string, Kursoppsummering>
             return { rad, kursNa: na?.siste_kurs ?? null, avkastning: null, treff: null };
         }
         const avkastning = (na.siste_kurs / rad.kurs - 1) * 100;
-        const opp = rad.rad === 'kjop' || rad.rad === 'hold';
-        return { rad, kursNa: na.siste_kurs, avkastning, treff: opp ? avkastning > 0 : avkastning < 0 };
+        return { rad, kursNa: na.siste_kurs, avkastning, treff: erPositiv(rad.rad) ? avkastning > 0 : avkastning < 0 };
     });
+}
+
+/** Buy and hold bet on a rising price, sell and don't-buy on a falling one. */
+export function erPositiv(rad: Rad): boolean {
+    return rad === 'kjop' || rad === 'hold';
+}
+
+export interface Treffsammendrag {
+    antall: number;
+    vurdert: number;
+    treff: number;
+    /** Mean change since the advice, for buy and hold. null when there are none to judge. */
+    snittPositiv: number | null;
+    snittNegativ: number | null;
+}
+
+export function oppsummer(liste: Utfall[]): Treffsammendrag {
+    const vurdert = liste.filter((u) => u.avkastning != null && u.treff != null);
+    const snitt = (del: Utfall[]) => (del.length ? del.reduce((sum, u) => sum + u.avkastning!, 0) / del.length : null);
+    return {
+        antall: liste.length,
+        vurdert: vurdert.length,
+        treff: vurdert.filter((u) => u.treff).length,
+        snittPositiv: snitt(vurdert.filter((u) => erPositiv(u.rad.rad))),
+        snittNegativ: snitt(vurdert.filter((u) => !erPositiv(u.rad.rad))),
+    };
+}
+
+/**
+ * How the advice has moved over the rounds. 'opp' and 'ned' mean it switched
+ * between the buy/hold and sell/don't-buy sides, 'skiftet' that it changed
+ * within one side (e.g. buy to hold after buying).
+ */
+export type Utvikling = 'opp' | 'ned' | 'skiftet' | 'stabil';
+
+export interface Historikkrad {
+    ticker: string;
+    /** One per round, oldest first; null where the stock got no advice that round. */
+    runder: (Utfall | null)[];
+    utvikling: Utvikling;
+}
+
+/** Each stock's advice across the given rounds, ordered by its newest advice. */
+export function historikk(alle: Utfall[], runder: string[]): Historikkrad[] {
+    const perTicker = Map.groupBy(
+        alle.filter((u) => runder.includes(u.rad.dato)),
+        (u) => u.rad.ticker,
+    );
+    const rader = [...perTicker].map(([ticker, liste]) => {
+        const iRunde = runder.map((d) => liste.find((u) => u.rad.dato === d) ?? null);
+        const gitt = iRunde.filter((u): u is Utfall => u != null).map((u) => u.rad.rad);
+        const forst = gitt[0];
+        const sist = gitt[gitt.length - 1];
+        let utvikling: Utvikling = 'stabil';
+        if (erPositiv(forst) !== erPositiv(sist)) utvikling = erPositiv(sist) ? 'opp' : 'ned';
+        else if (gitt.some((r, i) => i > 0 && r !== gitt[i - 1])) utvikling = 'skiftet';
+        return { ticker, runder: iRunde, utvikling };
+    });
+
+    // Stocks with advice in the newest round first, in the usual advice order.
+    const nyeste = (r: Historikkrad) => r.runder[r.runder.length - 1]?.rad;
+    const medNyeste = sorterAnbefalinger(
+        rader.filter((r) => nyeste(r)).map((r) => ({ ...nyeste(r)!, historikk: r })),
+    ).map((x) => x.historikk);
+    return [...medNyeste, ...rader.filter((r) => !nyeste(r)).sort((a, b) => a.ticker.localeCompare(b.ticker))];
 }

@@ -1,0 +1,276 @@
+---
+import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
+import Datafeil from '../../components/radgiver/Datafeil.astro';
+import Endring from '../../components/radgiver/Endring.astro';
+import RadMerke from '../../components/radgiver/RadMerke.astro';
+import Sikkerhet from '../../components/radgiver/Sikkerhet.astro';
+import {
+    hentLogg,
+    hentSisteUke,
+    historikk,
+    oppsummer,
+    utfall,
+    type Rad,
+    type Treffsammendrag,
+    type Utfall,
+    type Utvikling,
+} from '../../lib/radgiver/data';
+import { kortdato } from '../../lib/radgiver/format';
+
+export const prerender = false;
+
+const VALG = [
+    { id: '4', tekst: '4 siste', antall: 4 },
+    { id: '8', tekst: '8 siste', antall: 8 },
+    { id: 'alle', tekst: 'Alle', antall: Infinity },
+];
+const valgt = VALG.find((v) => v.id === Astro.url.searchParams.get('runder')) ?? VALG[0];
+
+let innhold;
+try {
+    const [uke, logg] = await Promise.all([hentSisteUke(), hentLogg()]);
+    innhold = { uke, logg };
+} catch (feil) {
+    innhold = { feil };
+}
+
+const uke = 'uke' in innhold ? innhold.uke : null;
+const alle: Utfall[] = uke && 'logg' in innhold ? utfall(innhold.logg, uke.ukedata.kurser) : [];
+const navn = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a.navn]));
+
+// Rounds are the dates the portfolio manager gave advice, oldest first.
+const runder = [...new Set(alle.map((u) => u.rad.dato))].sort().slice(-valgt.antall);
+const iVindu = alle.filter((u) => runder.includes(u.rad.dato));
+const rader = historikk(alle, runder);
+
+const perRunde = runder.map((d) => ({ dato: d, ...oppsummer(iVindu.filter((u) => u.rad.dato === d)) })).reverse();
+const RADTYPER: Rad[] = ['kjop', 'hold', 'selg', 'ikke_kjop'];
+const perRad = RADTYPER.map((r) => ({ rad: r, ...oppsummer(iVindu.filter((u) => u.rad.rad === r)) })).filter(
+    (r) => r.antall > 0,
+);
+
+const UTVIKLING: Record<Utvikling, string> = {
+    opp: '↑ Mer positiv',
+    ned: '↓ Mer negativ',
+    skiftet: 'Skiftet',
+    stabil: 'Uendret',
+};
+const antallEndret = rader.filter((r) => r.utvikling !== 'stabil').length;
+
+const treffAndel = (s: Treffsammendrag) => (s.vurdert ? `${Math.round((s.treff / s.vurdert) * 100)} %` : '–');
+---
+
+<RadgiverLayout title='Rådhistorikk' aktiv='historikk'>
+    {
+        'feil' in innhold ? (
+            <Datafeil feil={innhold.feil} />
+        ) : (
+            <>
+                <section class='rg-ingress'>
+                    <p class='rg-overtittel'>
+                        {runder.length === 0
+                            ? 'Fra beslutningsloggen'
+                            : `${runder.length} ${runder.length === 1 ? 'runde' : 'runder'}, ${kortdato(runder[0])}–${kortdato(runder[runder.length - 1])}`}
+                    </p>
+                    <h1>Rådhistorikk</h1>
+                    <p class='rg-kommentar'>
+                        Hva porteføljelederen har anbefalt for hver aksje de siste rundene, og hvordan kursen har gått
+                        siden. Kjøp og hold er et treff hvis kursen har steget til siste sluttkurs, selg og ikke kjøp hvis
+                        den har falt.
+                    </p>
+                </section>
+
+                <nav class='rg-landfilter' aria-label='Antall runder'>
+                    {VALG.map((v) => (
+                        <a href={`?runder=${v.id}`} aria-current={v.id === valgt.id ? 'true' : undefined}>
+                            {v.tekst}
+                        </a>
+                    ))}
+                </nav>
+
+                {rader.length === 0 ? (
+                    <div class='rg-kort rg-tom'>
+                        <p>Ingen råd i beslutningsloggen ennå.</p>
+                    </div>
+                ) : (
+                    <>
+                        <section class='rg-kort rg-seksjon' data-historikk>
+                            <div class='historikk-topp'>
+                                <h2>Råd per aksje</h2>
+                                {antallEndret > 0 && (
+                                    <button type='button' class='rg-ghost-button' aria-pressed='false' data-bare-endret>
+                                        Bare endrede ({antallEndret})
+                                    </button>
+                                )}
+                            </div>
+                            <div class='rg-tabell-rull'>
+                                <table class='rg-tabell historikk'>
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Aksje</th>
+                                            {runder.map((d) => (
+                                                <th scope='col'>
+                                                    <a class='link' href={`/radgiver/rapport/${d}`}>
+                                                        {kortdato(d)}
+                                                    </a>
+                                                </th>
+                                            ))}
+                                            <th scope='col'>Utvikling</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rader.map((r) => (
+                                            <tr data-utvikling={r.utvikling}>
+                                                <th scope='row'>
+                                                    <a class='link' href={`/radgiver/aksje/${r.ticker}`}>
+                                                        {navn.get(r.ticker) ?? r.ticker}
+                                                    </a>
+                                                </th>
+                                                {r.runder.map((u) =>
+                                                    u == null ? (
+                                                        <td class='rg-dempet'>–</td>
+                                                    ) : (
+                                                        <td>
+                                                            <div class='historikk-celle'>
+                                                                <RadMerke rad={u.rad.rad} />
+                                                                <Sikkerhet verdi={u.rad.sikkerhet} />
+                                                                {u.treff == null ? (
+                                                                    <span class='utfall utfall-venter'>For tidlig</span>
+                                                                ) : (
+                                                                    <span class='historikk-utfall'>
+                                                                        <Endring verdi={u.avkastning} />
+                                                                        {u.treff ? (
+                                                                            <span class='utfall utfall-treff' title='Treff'>
+                                                                                ✓<span class='sr-only'> Treff</span>
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span class='utfall utfall-bom' title='Bom'>
+                                                                                ✕<span class='sr-only'> Bom</span>
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    ),
+                                                )}
+                                                <td>
+                                                    <span class:list={['utvikling', `utvikling-${r.utvikling}`]}>
+                                                        {UTVIKLING[r.utvikling]}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class='rg-fotnote'>
+                                Prosenten er kursendringen fra rådet ble gitt til siste sluttkurs. «Mer positiv» betyr at
+                                rådet har gått fra selg eller ikke kjøp til kjøp eller hold, «Skiftet» at det har endret
+                                seg innenfor samme side, for eksempel fra kjøp til hold.
+                            </p>
+                        </section>
+
+                        <section class='rg-kort rg-seksjon'>
+                            <h2>Treff per runde</h2>
+                            <div class='rg-tabell-rull'>
+                                <table class='rg-tabell'>
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Runde</th>
+                                            <th scope='col' class='tall'>Råd</th>
+                                            <th scope='col' class='tall'>Treff</th>
+                                            <th scope='col' class='tall'>Kjøp og hold, snitt</th>
+                                            <th scope='col' class='tall'>Selg og ikke kjøp, snitt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {perRunde.map((s) => (
+                                            <tr>
+                                                <th scope='row'>
+                                                    <a class='link' href={`/radgiver/rapport/${s.dato}`}>
+                                                        {kortdato(s.dato)}
+                                                    </a>
+                                                </th>
+                                                <td class='tall'>{s.antall}</td>
+                                                <td class='tall'>
+                                                    {s.vurdert ? (
+                                                        <>
+                                                            {treffAndel(s)}{' '}
+                                                            <span class='rg-dempet'>
+                                                                ({s.treff}/{s.vurdert})
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span class='utfall utfall-venter'>For tidlig</span>
+                                                    )}
+                                                </td>
+                                                <td class='tall'>{s.snittPositiv == null ? '–' : <Endring verdi={s.snittPositiv} />}</td>
+                                                <td class='tall'>{s.snittNegativ == null ? '–' : <Endring verdi={s.snittNegativ} />}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class='rg-fotnote'>
+                                Rådene treffer når kjøp og hold i snitt gjør det bedre enn selg og ikke kjøp. Eldre runder
+                                har hatt lenger tid på seg, så de sier mest.
+                            </p>
+                        </section>
+
+                        <section class='rg-kort rg-seksjon'>
+                            <h2>Treff per råd</h2>
+                            <div class='rg-tabell-rull'>
+                                <table class='rg-tabell'>
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Råd</th>
+                                            <th scope='col' class='tall'>Antall</th>
+                                            <th scope='col' class='tall'>Treff</th>
+                                            <th scope='col' class='tall'>Kurs siden, snitt</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {perRad.map((s) => (
+                                            <tr>
+                                                <th scope='row'>
+                                                    <RadMerke rad={s.rad} />
+                                                </th>
+                                                <td class='tall'>{s.antall}</td>
+                                                <td class='tall'>
+                                                    {treffAndel(s)}
+                                                    {s.vurdert > 0 && (
+                                                        <span class='rg-dempet'>
+                                                            {' '}
+                                                            ({s.treff}/{s.vurdert})
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td class='tall'>
+                                                    {s.vurdert ? <Endring verdi={s.snittPositiv ?? s.snittNegativ} /> : '–'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </>
+                )}
+            </>
+        )
+    }
+</RadgiverLayout>
+
+<script>
+    // Show only the stocks whose advice changed. Without JS every stock is shown.
+    const knapp = document.querySelector<HTMLButtonElement>('[data-bare-endret]');
+    if (knapp) {
+        const rader = [...document.querySelectorAll<HTMLElement>('[data-historikk] tbody tr')];
+        knapp.addEventListener('click', () => {
+            const pa = knapp.getAttribute('aria-pressed') !== 'true';
+            knapp.setAttribute('aria-pressed', String(pa));
+            for (const rad of rader) rad.hidden = pa && rad.dataset.utvikling === 'stabil';
+        });
+    }
+</script>

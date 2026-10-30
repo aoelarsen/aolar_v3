@@ -13,7 +13,7 @@ import '../styles/pages/radgiver.css';
 export interface Props {
     title: string;
     /** Which tab in the sub-navigation is current. Omit to hide the navigation (login page). */
-    aktiv?: 'rad' | 'portefolje' | 'rapport' | 'arkiv' | 'treff' | 'aksje';
+    aktiv?: 'rad' | 'portefolje' | 'rapport' | 'arkiv' | 'historikk' | 'treff' | 'aksje';
 }
 
 const { title, aktiv } = Astro.props;
@@ -22,6 +22,7 @@ const lenker = [
     { id: 'portefolje', href: '/radgiver/portefolje', tekst: 'Portefølje' },
     { id: 'rapport', href: '/radgiver/rapport', tekst: 'Rapport' },
     { id: 'arkiv', href: '/radgiver/arkiv', tekst: 'Arkiv' },
+    { id: 'historikk', href: '/radgiver/historikk', tekst: 'Historikk' },
     { id: 'treff', href: '/radgiver/treff', tekst: 'Treffsikkerhet' },
 ];
 ---
