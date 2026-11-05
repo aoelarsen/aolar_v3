@@ -8,12 +8,13 @@ import Sikkerhet from '../../../components/radgiver/Sikkerhet.astro';
 import {
     SIGNAL_TEKST,
     delRisiko,
+    hentAvkastningskurser,
     hentKurshistorikk,
     hentLogg,
     hentSisteUke,
-    utfall,
     type Kursserie,
 } from '../../../lib/radgiver/data';
+import { utfall } from '../../../lib/radgiver/treff';
 import { dato, kortdato, kurs } from '../../../lib/radgiver/format';
 
 export const prerender = false;
@@ -22,8 +23,13 @@ const ticker = (Astro.params.ticker ?? '').toUpperCase();
 
 let innhold;
 try {
-    const [uke, historikk, logg] = await Promise.all([hentSisteUke(), hentKurshistorikk(), hentLogg()]);
-    innhold = { uke, historikk, logg };
+    const [uke, historikk, logg, kurser] = await Promise.all([
+        hentSisteUke(),
+        hentKurshistorikk(),
+        hentLogg(),
+        hentAvkastningskurser(),
+    ]);
+    innhold = { uke, historikk, logg, kurser };
 } catch (feil) {
     innhold = { feil };
 }
@@ -41,7 +47,7 @@ const fundamental = uke?.vurdering.fundamental.find((f) => f.ticker === ticker);
 const meldinger = new Map((uke?.ukedata.meldinger[ticker] ?? []).map((m) => [m.id, m]));
 const { risiko, tekst: begrunnelse } = delRisiko(anbefaling?.begrunnelse ?? '');
 
-const tidligere = 'logg' in innhold && uke ? utfall(innhold.logg.filter((r) => r.ticker === ticker), uke.ukedata.kurser).reverse() : [];
+const tidligere = 'logg' in innhold ? utfall(innhold.logg.filter((r) => r.ticker === ticker), innhold.kurser.serier).reverse() : [];
 const radIGraf = tidligere
     .filter((u) => u.rad.kursdato && u.rad.kurs != null)
     .map((u) => ({ dato: u.rad.kursdato!, kurs: u.rad.kurs!, rad: u.rad.rad }));
@@ -289,9 +295,9 @@ const nokkeltall = k && [
                                                     <Sikkerhet verdi={u.rad.sikkerhet} />
                                                 </td>
                                                 <td class='tall'>{kurs(u.rad.kurs)}</td>
-                                                <td class='tall'>{kurs(u.kursNa)}</td>
+                                                <td class='tall'>{kurs(k?.siste_kurs)}</td>
                                                 <td class='tall'>
-                                                    {u.avkastning == null ? <span class='rg-dempet'>For tidlig</span> : <Endring verdi={u.avkastning} />}
+                                                    {u.maling == null ? <span class='rg-dempet'>For tidlig</span> : <Endring verdi={u.maling.avkastning} />}
                                                 </td>
                                             </tr>
                                         ))}

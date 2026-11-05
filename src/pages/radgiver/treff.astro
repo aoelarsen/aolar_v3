@@ -4,35 +4,71 @@ import Datafeil from '../../components/radgiver/Datafeil.astro';
 import Endring from '../../components/radgiver/Endring.astro';
 import RadMerke from '../../components/radgiver/RadMerke.astro';
 import Sikkerhet from '../../components/radgiver/Sikkerhet.astro';
-import { hentLogg, hentSisteUke, utfall, type Utfall } from '../../lib/radgiver/data';
+import {
+    hentAvkastningskurser,
+    hentLogg,
+    hentSisteUke,
+    hentVurdering,
+    ukeDatoer,
+    type Rad,
+} from '../../lib/radgiver/data';
 import { kortdato, kurs, prosent } from '../../lib/radgiver/format';
+import {
+    PERIODER,
+    RADGIVER_TEKST,
+    nyeRad,
+    oppsummer,
+    radgiverTreff,
+    utfall,
+    type Treffsammendrag,
+} from '../../lib/radgiver/treff';
 
 export const prerender = false;
 
+/** Below this many judged advice, the page says the figures can still swing a lot. */
+const LITE_GRUNNLAG = 30;
+const RADTYPER: Rad[] = ['kjop', 'hold', 'selg', 'ikke_kjop'];
+
 let innhold;
 try {
-    const [uke, logg] = await Promise.all([hentSisteUke(), hentLogg()]);
-    innhold = { uke, logg };
+    const [uke, logg, kurser, datoer] = await Promise.all([
+        hentSisteUke(),
+        hentLogg(),
+        hentAvkastningskurser(),
+        ukeDatoer(),
+    ]);
+    const uker = await Promise.all(datoer.map(async (dato) => ({ dato, vurdering: await hentVurdering(dato) })));
+    innhold = { uke, logg, kurser, uker };
 } catch (feil) {
     innhold = { feil };
 }
 
-const uke = 'uke' in innhold ? innhold.uke : null;
-const alle: Utfall[] = uke && 'logg' in innhold ? utfall(innhold.logg, uke.ukedata.kurser) : [];
-const navn = new Map(uke?.ukedata.aksjer.map((a) => [a.ticker, a.navn]));
-const vurdert = alle.filter((u) => u.treff != null);
-const treff = vurdert.filter((u) => u.treff).length;
+const data = 'feil' in innhold ? null : innhold;
+const logg = data?.logg ?? [];
+const serier = data?.kurser.serier ?? {};
+const nye = nyeRad(logg);
 
-const snitt = (liste: Utfall[]) =>
-    liste.length ? liste.reduce((sum, u) => sum + (u.avkastning ?? 0), 0) / liste.length : null;
-const kjop = vurdert.filter((u) => u.rad.rad === 'kjop' || u.rad.rad === 'hold');
-const ikkeKjop = vurdert.filter((u) => u.rad.rad === 'ikke_kjop' || u.rad.rad === 'selg');
-const snittKjop = snitt(kjop);
-const snittIkkeKjop = snitt(ikkeKjop);
-const forskjell = snittKjop != null && snittIkkeKjop != null ? snittKjop - snittIkkeKjop : null;
+// Without a choice, show the longest period that has a result.
+const periode =
+    PERIODER.find((p) => p.id === Astro.url.searchParams.get('periode')) ??
+    PERIODER.findLast((p) => oppsummer(utfall(nye, serier, p)).vurdert > 0) ??
+    PERIODER[0];
 
-// Newest week first, then in the order the advice was given.
-const perUke = Map.groupBy([...alle].reverse(), (u) => u.rad.dato);
+const alle = utfall(nye, serier, periode);
+const samlet = oppsummer(alle);
+const venter = samlet.antall - samlet.vurdert;
+const forskjell =
+    samlet.snittPositiv != null && samlet.snittNegativ != null ? samlet.snittPositiv - samlet.snittNegativ : null;
+
+const aksjer = data?.uke?.ukedata.aksjer ?? [];
+const navn = new Map(aksjer.map((a) => [a.ticker, a.navn]));
+const perRadgiver = radgiverTreff(data?.uker ?? [], aksjer, logg, serier, periode);
+const perRad = RADTYPER.map((r) => ({ rad: r, ...oppsummer(alle.filter((u) => u.rad.rad === r)) })).filter(
+    (r) => r.antall > 0,
+);
+const perUke = [...Map.groupBy(alle, (u) => u.rad.dato)].reverse();
+
+const andel = (s: Treffsammendrag) => (s.vurdert ? `${Math.round((s.treff / s.vurdert) * 100)} %` : '–');
 ---
 
 <RadgiverLayout title='Treffsikkerhet' aktiv='treff'>
@@ -45,60 +81,152 @@ const perUke = Map.groupBy([...alle].reverse(), (u) => u.rad.dato);
                     <p class='rg-overtittel'>Fra beslutningsloggen</p>
                     <h1>Treffsikkerhet</h1>
                     <p class='rg-kommentar'>
-                        Hvert råd sammenlignes med siste sluttkurs. Kjøp og hold er et treff hvis kursen har steget, selg og
-                        ikke kjøp hvis den har falt. Utbytte og utviklingen i børsen som helhet er ikke tatt med.
+                        Hvert råd måles mot snittet av de {Object.keys(serier).length} aksjene vi følger, over samme
+                        periode og i aksjenes egen valuta. Kjøp og hold er et treff hvis aksjen gjør det bedre enn snittet,
+                        selg og ikke kjøp hvis den gjør det dårligere. Et råd som gjentas uke etter uke, teller én gang,
+                        fra første gang det ble gitt.
+                        {data?.kurser.medUtbytte ? ' Utbytte er tatt med.' : ' Utbytte tas med etter neste ukedatakjøring.'}
                     </p>
                 </section>
 
-                {vurdert.length === 0 ? (
+                <nav class='rg-landfilter' aria-label='Måleperiode'>
+                    {PERIODER.map((p) => (
+                        <a href={`?periode=${p.id}`} aria-current={p.id === periode.id ? 'true' : undefined}>
+                            {p.tekst}
+                        </a>
+                    ))}
+                </nav>
+
+                {samlet.vurdert === 0 ? (
                     <div class='rg-kort rg-tom'>
-                        <p>
-                            Ingen råd kan vurderes ennå. Det første resultatet kommer når neste ukes kurser er hentet
-                            lørdag.
-                        </p>
+                        <p>Ingen råd har vært ute i {periode.tekst} ennå.</p>
                     </div>
                 ) : (
-                    <dl class='nokkeltall nokkeltall-stor'>
-                        <div class='nokkeltall-hoved'>
-                            <dt>Treff</dt>
-                            <dd>
-                                {Math.round((treff / vurdert.length) * 100)} %
-                                <span class='nokkeltall-under'>
-                                    {treff} av {vurdert.length} råd
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>Kjøp og hold, snitt</dt>
-                            <dd>
-                                <Endring verdi={snittKjop} />
-                                <span class='nokkeltall-under'>{kjop.length} råd</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>Selg og ikke kjøp, snitt</dt>
-                            <dd>
-                                <Endring verdi={snittIkkeKjop} />
-                                <span class='nokkeltall-under'>{ikkeKjop.length} råd</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>Forskjell</dt>
-                            <dd>
-                                {forskjell == null ? '–' : `${prosent(forskjell)}`}
-                                <span class='nokkeltall-under'>
-                                    {forskjell == null ? 'Trenger begge typer råd' : forskjell > 0 ? 'Kjøpsrådene har gjort det best' : 'Kjøpsrådene har gjort det dårligst'}
-                                </span>
-                            </dd>
-                        </div>
-                    </dl>
+                    <>
+                        <dl class='nokkeltall nokkeltall-stor'>
+                            <div class='nokkeltall-hoved'>
+                                <dt>Treff etter {periode.tekst}</dt>
+                                <dd>
+                                    {andel(samlet)}
+                                    <span class='nokkeltall-under'>
+                                        {samlet.treff} av {samlet.vurdert} råd
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Kjøp og hold mot snittet</dt>
+                                <dd>
+                                    <Endring verdi={samlet.snittPositiv} />
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Selg og ikke kjøp mot snittet</dt>
+                                <dd>
+                                    <Endring verdi={samlet.snittNegativ} />
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Forskjell</dt>
+                                <dd>
+                                    {forskjell == null ? '–' : prosent(forskjell)}
+                                    <span class='nokkeltall-under'>
+                                        {forskjell == null
+                                            ? 'Trenger begge typer råd'
+                                            : forskjell > 0
+                                              ? 'Kjøpsrådene har gjort det best'
+                                              : 'Kjøpsrådene har gjort det dårligst'}
+                                    </span>
+                                </dd>
+                            </div>
+                        </dl>
+                        {samlet.vurdert < LITE_GRUNNLAG && (
+                            <p class='rg-fotnote'>
+                                Bare {samlet.vurdert} råd er vurdert så langt, så tallene kan endre seg mye.
+                                {venter > 0 && ` ${venter} råd venter på at perioden skal bli ferdig.`}
+                            </p>
+                        )}
+
+                        <section class='rg-kort rg-seksjon'>
+                            <h2>Per rådgiver</h2>
+                            <div class='rg-tabell-rull'>
+                                <table class='rg-tabell'>
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Rådgiver</th>
+                                            <th scope='col' class='tall'>Treff</th>
+                                            <th scope='col' class='tall'>Positive mot snittet</th>
+                                            <th scope='col' class='tall'>Negative mot snittet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {perRadgiver.map((s) => (
+                                            <tr>
+                                                <th scope='row'>{RADGIVER_TEKST[s.radgiver]}</th>
+                                                <td class='tall'>
+                                                    {andel(s)}
+                                                    {s.vurdert > 0 && (
+                                                        <span class='rg-dempet'>
+                                                            {' '}
+                                                            ({s.treff}/{s.vurdert})
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td class='tall'>{s.snittPositiv == null ? '–' : <Endring verdi={s.snittPositiv} />}</td>
+                                                <td class='tall'>{s.snittNegativ == null ? '–' : <Endring verdi={s.snittNegativ} />}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class='rg-fotnote'>
+                                Spesialistene måles på positive og negative signaler. Nøytrale signaler spår ingen retning og
+                                er ikke med.
+                            </p>
+                        </section>
+
+                        <section class='rg-kort rg-seksjon'>
+                            <h2>Per råd</h2>
+                            <div class='rg-tabell-rull'>
+                                <table class='rg-tabell'>
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Råd</th>
+                                            <th scope='col' class='tall'>Treff</th>
+                                            <th scope='col' class='tall'>Mot snittet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {perRad.map((s) => (
+                                            <tr>
+                                                <th scope='row'>
+                                                    <RadMerke rad={s.rad} />
+                                                </th>
+                                                <td class='tall'>
+                                                    {andel(s)}
+                                                    {s.vurdert > 0 && (
+                                                        <span class='rg-dempet'>
+                                                            {' '}
+                                                            ({s.treff}/{s.vurdert})
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td class='tall'>
+                                                    {s.vurdert ? <Endring verdi={s.snittPositiv ?? s.snittNegativ} /> : '–'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </>
                 )}
 
-                {[...perUke].map(([d, rader]) => (
+                {perUke.map(([d, rader]) => (
                     <section class='rg-kort rg-seksjon'>
                         <h2>
                             <a class='link' href={`/radgiver/rapport/${d}`}>
-                                Råd {kortdato(d)}
+                                Nye råd {kortdato(d)}
                             </a>
                         </h2>
                         <div class='rg-tabell-rull'>
@@ -109,8 +237,9 @@ const perUke = Map.groupBy([...alle].reverse(), (u) => u.rad.dato);
                                         <th scope='col'>Råd</th>
                                         <th scope='col'>Sikkerhet</th>
                                         <th scope='col' class='tall'>Kurs da</th>
-                                        <th scope='col' class='tall'>Kurs nå</th>
-                                        <th scope='col' class='tall'>Siden</th>
+                                        <th scope='col' class='tall'>Aksjen</th>
+                                        <th scope='col' class='tall'>Snittet</th>
+                                        <th scope='col' class='tall'>Mot snittet</th>
                                         <th scope='col'>Utfall</th>
                                     </tr>
                                 </thead>
@@ -129,12 +258,13 @@ const perUke = Map.groupBy([...alle].reverse(), (u) => u.rad.dato);
                                                 <Sikkerhet verdi={u.rad.sikkerhet} />
                                             </td>
                                             <td class='tall'>{kurs(u.rad.kurs)}</td>
-                                            <td class='tall'>{kurs(u.kursNa)}</td>
-                                            <td class='tall'>{u.avkastning == null ? '–' : <Endring verdi={u.avkastning} />}</td>
+                                            <td class='tall'>{u.maling ? <Endring verdi={u.maling.avkastning} /> : '–'}</td>
+                                            <td class='tall'>{u.maling ? <Endring verdi={u.maling.marked} /> : '–'}</td>
+                                            <td class='tall'>{u.maling ? <Endring verdi={u.maling.mer} /> : '–'}</td>
                                             <td>
-                                                {u.treff == null ? (
+                                                {u.maling == null ? (
                                                     <span class='utfall utfall-venter'>For tidlig</span>
-                                                ) : u.treff ? (
+                                                ) : u.maling.treff ? (
                                                     <span class='utfall utfall-treff'>✓ Treff</span>
                                                 ) : (
                                                     <span class='utfall utfall-bom'>✕ Bom</span>

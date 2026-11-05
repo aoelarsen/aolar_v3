@@ -4,6 +4,7 @@
  */
 import { GithubFeil, hentFil, listMappe } from './github';
 import { KAPITALFIL, tolkKapital, type Kapital } from './portefolje';
+import { erPositiv, type Utfall } from './treff';
 
 export type Rad = 'kjop' | 'hold' | 'selg' | 'ikke_kjop';
 export type Signal = 'positiv' | 'noytral' | 'negativ';
@@ -154,15 +155,28 @@ export async function hentSisteUke(): Promise<Uke | null> {
     return siste ? hentUke(siste) : null;
 }
 
-/**
- * Daily closes from the newest kurser-*.json. The charts always use the newest
- * file, so older weeks get the full history too. Empty until the first
- * Ukedata run that writes the file.
- */
-export async function hentKurshistorikk(): Promise<Record<string, Kursserie>> {
+interface Kursfil {
+    kurser: Record<string, Kursserie>;
+    /** Adjusted for dividends and splits. Missing in files from before it was added. */
+    justert?: Record<string, Kursserie>;
+}
+
+/** The newest kurser-*.json. It holds the full history, so older weeks need no file of their own. */
+async function hentKursfil(): Promise<Kursfil> {
     const [siste] = datoer(await listMappe('ukedata'), 'kurser-');
-    if (!siste) return {};
-    return (JSON.parse(await hentFil(`ukedata/kurser-${siste}.json`)) as { kurser: Record<string, Kursserie> }).kurser;
+    return siste ? JSON.parse(await hentFil(`ukedata/kurser-${siste}.json`)) : { kurser: {} };
+}
+
+/** Daily closes for the charts. Empty until the first Ukedata run that writes the file. */
+export async function hentKurshistorikk(): Promise<Record<string, Kursserie>> {
+    return (await hentKursfil()).kurser;
+}
+
+/** Prices for measuring returns: with dividends once the newest file has adjusted closes. */
+export async function hentAvkastningskurser(): Promise<{ serier: Record<string, Kursserie>; medUtbytte: boolean }> {
+    const { kurser, justert } = await hentKursfil();
+    const medUtbytte = Object.keys(justert ?? {}).length > 0;
+    return { serier: medUtbytte ? justert! : kurser, medUtbytte };
 }
 
 /** The capital register, or null before the stock tool has one. */
@@ -223,55 +237,6 @@ export function glidendeSnitt(serie: Kursserie, n: number): (number | null)[] {
         if (i >= n) sum -= serie[i - n][1];
         return i >= n - 1 ? sum / n : null;
     });
-}
-
-export interface Utfall {
-    rad: Loggrad;
-    kursNa: number | null;
-    avkastning: number | null;
-    /** null while the advice is too new to judge. */
-    treff: boolean | null;
-}
-
-/**
- * How each logged advice has done, measured against the newest closing price.
- * Buy and hold count as a hit if the price rose, sell and don't-buy if it fell.
- */
-export function utfall(logg: Loggrad[], kurser: Record<string, Kursoppsummering>): Utfall[] {
-    return logg.map((rad) => {
-        const na = kurser[rad.ticker];
-        if (!na || rad.kurs == null || !rad.kursdato || na.siste_dato <= rad.kursdato) {
-            return { rad, kursNa: na?.siste_kurs ?? null, avkastning: null, treff: null };
-        }
-        const avkastning = (na.siste_kurs / rad.kurs - 1) * 100;
-        return { rad, kursNa: na.siste_kurs, avkastning, treff: erPositiv(rad.rad) ? avkastning > 0 : avkastning < 0 };
-    });
-}
-
-/** Buy and hold bet on a rising price, sell and don't-buy on a falling one. */
-export function erPositiv(rad: Rad): boolean {
-    return rad === 'kjop' || rad === 'hold';
-}
-
-export interface Treffsammendrag {
-    antall: number;
-    vurdert: number;
-    treff: number;
-    /** Mean change since the advice, for buy and hold. null when there are none to judge. */
-    snittPositiv: number | null;
-    snittNegativ: number | null;
-}
-
-export function oppsummer(liste: Utfall[]): Treffsammendrag {
-    const vurdert = liste.filter((u) => u.avkastning != null && u.treff != null);
-    const snitt = (del: Utfall[]) => (del.length ? del.reduce((sum, u) => sum + u.avkastning!, 0) / del.length : null);
-    return {
-        antall: liste.length,
-        vurdert: vurdert.length,
-        treff: vurdert.filter((u) => u.treff).length,
-        snittPositiv: snitt(vurdert.filter((u) => erPositiv(u.rad.rad))),
-        snittNegativ: snitt(vurdert.filter((u) => !erPositiv(u.rad.rad))),
-    };
 }
 
 /**
