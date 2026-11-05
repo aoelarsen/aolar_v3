@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { AstroCookies } from 'astro';
 import { getSecret } from 'astro:env/server';
+import { lagInnloggingsepost } from './innloggingsepost';
 
 /**
  * Sign-in for /radgiver without any stored state: an e-mailed link and a session
@@ -9,7 +10,7 @@ import { getSecret } from 'astro:env/server';
  * because the allow-list is checked on every request.
  */
 const OKT_COOKIE = 'radgiver_okt';
-const LENKE_SEKUNDER = 15 * 60;
+const LENKE_MINUTTER = 15;
 const OKT_SEKUNDER = 30 * 24 * 60 * 60;
 const MIN_HEMMELIGHET = 32;
 /** Per address. Best effort: each warm function has its own map. */
@@ -79,17 +80,18 @@ export async function sendInnloggingslenke(epost: string, side: URL): Promise<bo
     if (!nokkel) throw new Error('RESEND_API_KEY er ikke satt');
 
     const lenke = new URL('/radgiver/auth/bekreft', side);
-    lenke.searchParams.set('token', lagToken('lenke', adresse, LENKE_SEKUNDER));
+    lenke.searchParams.set('token', lagToken('lenke', adresse, LENKE_MINUTTER * 60));
 
+    const { emne, tekst, html } = lagInnloggingsepost(lenke.toString(), LENKE_MINUTTER);
     const svar = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${nokkel}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
             from: FRA,
             to: [adresse],
-            subject: 'Logg inn på AOLar Rådgiver',
-            text: `Åpne denne lenken for å logge inn:\n\n${lenke}\n\nLenken virker i 15 minutter. Har du ikke bedt om den, kan du se bort fra denne e-posten.`,
-            html: `<p><a href="${lenke}">Logg inn på AOLar Rådgiver</a></p><p>Lenken virker i 15 minutter. Har du ikke bedt om den, kan du se bort fra denne e-posten.</p>`,
+            subject: emne,
+            text: tekst,
+            html,
         }),
         signal: AbortSignal.timeout(10_000),
     });
