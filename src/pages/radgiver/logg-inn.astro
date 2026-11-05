@@ -1,11 +1,10 @@
 ---
 import RadgiverLayout from '../../layouts/RadgiverLayout.astro';
-import { harTilgang, innloggetEpost, lagSupabase } from '../../lib/radgiver/supabase';
+import { harTilgang, innloggetEpost, sendInnloggingslenke } from '../../lib/radgiver/innlogging';
 
 export const prerender = false;
 
-const supabase = lagSupabase(Astro.request, Astro.cookies);
-if (await innloggetEpost(supabase)) return Astro.redirect('/radgiver', 303);
+if (innloggetEpost(Astro.cookies)) return Astro.redirect('/radgiver', 303);
 
 type Status = 'skjema' | 'sendt' | 'for-mange' | 'utlopt';
 let status: Status = Astro.url.searchParams.get('feil') === 'lenke' ? 'utlopt' : 'skjema';
@@ -17,17 +16,12 @@ if (Astro.request.method === 'POST') {
     // Addresses off the allow-list get the same "check your e-mail" answer, but no e-mail is sent.
     status = 'sendt';
     if (harTilgang(epost)) {
-        const { error } = await supabase.auth.signInWithOtp({
-            email: epost,
-            options: {
-                // Never create a user from here, even for an allowed address.
-                shouldCreateUser: false,
-                emailRedirectTo: new URL('/radgiver/auth/bekreft', Astro.url).toString(),
-            },
-        });
-        // The real reason goes to the function log, where a misconfiguration would show up.
-        if (error) console.error('Innloggingslenke ikke sendt:', error.status, error.message);
-        status = error?.status === 429 ? 'for-mange' : 'sendt';
+        try {
+            if (!(await sendInnloggingslenke(epost, Astro.url))) status = 'for-mange';
+        } catch (feil) {
+            // The real reason goes to the function log, where a misconfiguration would show up.
+            console.error('Innloggingslenke ikke sendt:', feil);
+        }
     }
 }
 ---
@@ -41,7 +35,7 @@ if (Astro.request.method === 'POST') {
                     <h1>Lenken er på vei</h1>
                     <p>
                         Har <strong>{epost}</strong> tilgang, får du en e-post med en innloggingslenke om litt. Lenken
-                        virker én gang og går ut etter en time.
+                        virker i 15 minutter.
                     </p>
                     <p class='rg-dempet'>
                         Ingen e-post? Se i søppelposten, eller <a class='link' href='/radgiver/logg-inn'>prøv igjen</a>.
@@ -59,7 +53,7 @@ if (Astro.request.method === 'POST') {
                     )}
                     {status === 'utlopt' && (
                         <p class='rg-melding rg-melding-feil' role='alert'>
-                            Lenken er brukt eller utløpt. Be om en ny under.
+                            Lenken er ugyldig eller utløpt. Be om en ny under.
                         </p>
                     )}
                     <label class='rg-felt'>

@@ -27,11 +27,13 @@ export default defineConfig({
         // Set in the Netlify project. Read at request time, never sent to the browser.
         // Optional so the static pages build without them; /radgiver checks them on use.
         schema: {
-            VITE_SUPABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
-            VITE_SUPABASE_PUBLISHABLE_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
             GITHUB_TOKEN_VERKTOY: envField.string({ context: 'server', access: 'secret', optional: true }),
             // Comma-separated e-mail addresses allowed into /radgiver. Unset means nobody.
             RADGIVER_EPOST: envField.string({ context: 'server', access: 'secret', optional: true }),
+            // Signs the sign-in links and session cookies. At least 32 characters; unset means nobody gets in.
+            RADGIVER_HEMMELIGHET: envField.string({ context: 'server', access: 'secret', optional: true }),
+            // Sends the sign-in links from login.aolar.no.
+            RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
         },
     },
 });
