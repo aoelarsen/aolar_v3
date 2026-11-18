@@ -4,6 +4,7 @@ import baglerlarsen from '../assets/projects/baglerlarsen.webp';
 import bryggepraten from '../assets/projects/bryggepraten.webp';
 import fotografmortenflaten from '../assets/projects/fotografmortenflaten.webp';
 import roykensykkelservice from '../assets/projects/roykensykkelservice.webp';
+import tastaturtester from '../assets/projects/tastaturtester.webp';
 
 export interface Project {
     name: string;
@@ -15,6 +16,15 @@ export interface Project {
 
 /** Shown on /projects in this order. */
 export const projects: Project[] = [
+    {
+        name: 'Tastaturtester',
+        url: 'https://tastaturtester.netlify.app/',
+        image: tastaturtester,
+        description: {
+            nb: 'Et gratis verktøy for å teste tastaturet i nettleseren. Trykk på hver tast og se hvilke som virker, avslør prell i defekte brytere og sjekk rollover, med layouter fra 100 % til 60 % og nordiske språk.',
+            en: 'A free in-browser keyboard tester. Press every key to see which ones work, catch chatter from faulty switches and check rollover, with layouts from full-size to 60% and Nordic languages.',
+        },
+    },
     {
         name: 'Røyken Sykkelservice AS',
         url: 'https://roykensykkelservice.no/',
